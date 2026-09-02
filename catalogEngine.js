@@ -1,6 +1,6 @@
 /**
- * ARSA Cotizador Next - CatalogEngine
- * Búsqueda estricta por nombre, marca, modelo e identificador.
+ * ARSA Cotizador Next - Catalog Engine
+ * Búsqueda estricta, filtrado por marca y filtro de equipos incluidos.
  */
 
 function normalizeText(value = '') {
@@ -9,35 +9,25 @@ function normalizeText(value = '') {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim()
+    .replace(/[-_/.,]+/g, ' ')
     .replace(/\s+/g, ' ');
 }
 
-function getSearchTerms(value = '') {
+function getTerms(value = '') {
   return normalizeText(value)
-    .replace(/[-_/.,]+/g, ' ')
     .split(' ')
     .filter(Boolean);
 }
 
-function containsAllTerms(text, terms) {
-  const normalizedText = normalizeText(text);
-  return terms.every(term => normalizedText.includes(term));
+function matchesAllTerms(text, terms) {
+  const normalized = normalizeText(text);
+  return terms.every(term => normalized.includes(term));
 }
 
-function containsModelNumber(text, number) {
-  const normalizedText = normalizeText(text);
-
-  const expressions = [
-    new RegExp(`\\b${number}\\b`),
-    new RegExp(`iphone\\s*${number}\\b`),
-    new RegExp(`galaxy\\s*${number}\\b`),
-    new RegExp(`samsung\\s*${number}\\b`),
-    new RegExp(`redmi\\s*${number}\\b`),
-    new RegExp(`note\\s*${number}\\b`),
-    new RegExp(`edge\\s*${number}\\b`)
-  ];
-
-  return expressions.some(expression => expression.test(normalizedText));
+function hasExactNumber(text, number) {
+  const normalized = normalizeText(text);
+  const expression = new RegExp(`\\b${number}\\b`);
+  return expression.test(normalized);
 }
 
 export class CatalogEngine {
@@ -64,54 +54,6 @@ export class CatalogEngine {
     return [...this.brands];
   }
 
-  filterBrand(brandName = '') {
-    const brand = normalizeText(brandName);
-
-    if (!brand || brand === 'todas') {
-      return [...this.catalog];
-    }
-
-    return this.catalog.filter(device =>
-      normalizeText(device?.brand) === brand
-    );
-  }
-
-  searchDevice(brand = '', query = '') {
-    const devices = this.filterBrand(brand);
-    const normalizedQuery = normalizeText(query);
-    const terms = getSearchTerms(query);
-
-    if (!normalizedQuery) {
-      return devices;
-    }
-
-    // Si la búsqueda es solamente numérica, debe coincidir
-    // con ese número exacto y no con otros números.
-    if (/^\d+$/.test(normalizedQuery)) {
-      return devices.filter(device => {
-        const fullName = `${device?.brand || ''} ${device?.name || ''}`;
-        return containsModelNumber(fullName, normalizedQuery);
-      });
-    }
-
-    // Si la búsqueda contiene un modelo numérico,
-    // todos los términos deben coincidir.
-    const hasNumber = terms.some(term => /^\d+$/.test(term));
-
-    if (hasNumber) {
-      return devices.filter(device => {
-        const fullName = `${device?.brand || ''} ${device?.name || ''}`;
-        return containsAllTerms(fullName, terms);
-      });
-    }
-
-    // Para búsquedas de texto, todos los términos deben coincidir.
-    return devices.filter(device => {
-      const fullName = `${device?.brand || ''} ${device?.name || ''}`;
-      return containsAllTerms(fullName, terms);
-    });
-  }
-
   getDeviceById(id) {
     return this.catalog.find(device =>
       String(device?.id) === String(id)
@@ -126,5 +68,83 @@ export class CatalogEngine {
     }
 
     return this.catalog[safeIndex] || null;
+  }
+
+  filterBrand(brandName = '') {
+    const brand = normalizeText(brandName);
+
+    if (!brand || brand === 'todas') {
+      return [...this.catalog];
+    }
+
+    return this.catalog.filter(device =>
+      normalizeText(device?.brand) === brand
+    );
+  }
+
+  /**
+   * Regresa true si el equipo tiene precio incluido ($0 / INCLUDED)
+   * para el plan y plazo solicitados.
+   *
+   * Titanio se resuelve desde el motor comercial, por eso este filtro
+   * se utiliza solamente para planes normales del Excel.
+   */
+  isIncludedFor(device, planName, termMonths) {
+    const promo = device?.promos?.[planName]?.[termMonths];
+
+    return (
+      promo?.type === 'INCLUDED' ||
+      (
+        promo?.type === 'PRICE' &&
+        Number(promo?.value) === 0
+      )
+    );
+  }
+
+  /**
+   * Busca equipos por marca y texto.
+   *
+   * Si escribes solamente un número, como "17", busca el número como
+   * un término individual y evita resultados como "117" o "170".
+   */
+  searchDevice(brandName = '', query = '', options = {}) {
+    const {
+      includedOnly = false,
+      planName = '',
+      termMonths = 36
+    } = options;
+
+    const terms = getTerms(query);
+
+    let results = this.filterBrand(brandName);
+
+    if (includedOnly) {
+      results = results.filter(device =>
+        this.isIncludedFor(device, planName, termMonths)
+      );
+    }
+
+    if (!terms.length) {
+      return results;
+    }
+
+    return results.filter(device => {
+      const searchableText = [
+        device?.brand || '',
+        device?.name || '',
+        device?.id || ''
+      ].join(' ');
+
+      const numericTerms = terms.filter(term => /^\d+$/.test(term));
+      const textTerms = terms.filter(term => !/^\d+$/.test(term));
+
+      const numbersMatch = numericTerms.every(number =>
+        hasExactNumber(searchableText, number)
+      );
+
+      const wordsMatch = matchesAllTerms(searchableText, textTerms);
+
+      return numbersMatch && wordsMatch;
+    });
   }
 }
