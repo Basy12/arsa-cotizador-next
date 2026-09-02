@@ -1,18 +1,3 @@
-/**
- * ARSA Cotizador Next - app.js
- * Controlador principal de la aplicación.
- *
- * Estructura plana:
- * index.html
- * app.js
- * quoteEngine.js
- * excelImporter.js
- * catalogEngine.js
- * storageService.js
- * planThemes.js
- * crystal.css
- */
-
 import { CatalogEngine } from './catalogEngine.js';
 import { loadWorkbook } from './excelImporter.js';
 import {
@@ -28,251 +13,159 @@ import {
 } from './storageService.js';
 import { resolvePlanTheme } from './planThemes.js';
 
-export const catalogEngine = new CatalogEngine();
+const catalogEngine = new CatalogEngine();
 
-export const elements = {
-  excelFileInput: null,
-  catalogStatus: null,
-
-  clientNameInput: null,
-  clientPhoneInput: null,
-  operationSelect: null,
-
-  brandSelect: null,
-  deviceSearch: null,
-  deviceSelect: null,
-  planSelect: null,
-  termSelect: null,
-  downPaymentInput: null,
-
-  portabilityToggle: null,
-  insuranceToggle: null,
-  controlToggle: null,
-
-  cardPlanTitle: null,
-  cardPlanTerm: null,
-  cardPlanPrice: null,
-
-  cardClientName: null,
-  cardClientPhone: null,
-  cardOperation: null,
-
-  cardDeviceBrand: null,
-  cardDeviceName: null,
-  cardValidity: null,
-
-  cardListPrice: null,
-  cardPromoPrice: null,
-  cardDownPayment: null,
-  cardBalance: null,
-  cardTotalMonthly: null,
-  cardSavingsLabel: null,
-
-  cardTotalSavings: null,
-  cardDiscountPercent: null,
-
-  quoteBreakdown: null,
-  toggleBreakdown: null,
-  toggleBreakdownText: null,
-  toggleBreakdownIcon: null,
-
-  breakdownPlan: null,
-  breakdownDevice: null,
-  breakdownInsurance: null,
-  breakdownControl: null,
-  breakdownTotal: null,
-
-  btnExportPNG: null,
-  btnExportPDF: null
-};
-
-export const appState = {
-  selectedDevice: null,
-  currentQuote: null,
-  catalogMeta: null
+const elements = {};
+let selectedDevice = null;
+let commercialValidation = {
+  valid: false,
+  blockExport: true,
+  messages: []
 };
 
 export function init() {
   captureElements();
-  setupEventListeners();
-  loadApplicationData();
+  addListeners();
+  loadSavedData();
   renderQuote();
 }
 
 function captureElements() {
-  elements.excelFileInput = document.getElementById('excelFileInput');
-  elements.catalogStatus = document.getElementById('catalogStatus');
-
-  elements.clientNameInput = document.getElementById('clientNameInput');
-  elements.clientPhoneInput = document.getElementById('clientPhoneInput');
-  elements.operationSelect = document.getElementById('operationSelect');
-
-  elements.brandSelect = document.getElementById('brandSelect');
-  elements.deviceSearch = document.getElementById('deviceSearch');
-  elements.deviceSelect = document.getElementById('deviceSelect');
-  elements.planSelect = document.getElementById('planSelect');
-  elements.termSelect = document.getElementById('termSelect');
-  elements.downPaymentInput = document.getElementById('downPaymentInput');
-
-  elements.portabilityToggle = document.getElementById('portabilityToggle');
-  elements.insuranceToggle = document.getElementById('insuranceToggle');
-  elements.controlToggle = document.getElementById('controlToggle');
-
-  elements.cardPlanTitle = document.getElementById('cardPlanTitle');
-  elements.cardPlanTerm = document.getElementById('cardPlanTerm');
-  elements.cardPlanPrice = document.getElementById('cardPlanPrice');
-
-  elements.cardClientName = document.getElementById('cardClientName');
-  elements.cardClientPhone = document.getElementById('cardClientPhone');
-  elements.cardOperation = document.getElementById('cardOperation');
-
-  elements.cardDeviceBrand = document.getElementById('cardDeviceBrand');
-  elements.cardDeviceName = document.getElementById('cardDeviceName');
-  elements.cardValidity = document.getElementById('cardValidity');
-
-  elements.cardListPrice = document.getElementById('cardListPrice');
-  elements.cardPromoPrice = document.getElementById('cardPromoPrice');
-  elements.cardDownPayment = document.getElementById('cardDownPayment');
-  elements.cardBalance = document.getElementById('cardBalance');
-  elements.cardTotalMonthly = document.getElementById('cardTotalMonthly');
-  elements.cardSavingsLabel = document.getElementById('cardSavingsLabel');
-
-  elements.cardTotalSavings = document.getElementById('cardTotalSavings');
-  elements.cardDiscountPercent = document.getElementById('cardDiscountPercent');
-
-  elements.quoteBreakdown = document.getElementById('quoteBreakdown');
-  elements.toggleBreakdown = document.getElementById('toggleBreakdown');
-  elements.toggleBreakdownText = document.getElementById('toggleBreakdownText');
-  elements.toggleBreakdownIcon = document.getElementById('toggleBreakdownIcon');
-
-  elements.breakdownPlan = document.getElementById('breakdownPlan');
-  elements.breakdownDevice = document.getElementById('breakdownDevice');
-  elements.breakdownInsurance = document.getElementById('breakdownInsurance');
-  elements.breakdownControl = document.getElementById('breakdownControl');
-  elements.breakdownTotal = document.getElementById('breakdownTotal');
-
-  elements.btnExportPNG = document.getElementById('btnExportPNG');
-  elements.btnExportPDF = document.getElementById('btnExportPDF');
+  [
+    'excelFileInput',
+    'catalogStatus',
+    'commercialAlert',
+    'clientNameInput',
+    'clientPhoneInput',
+    'operationSelect',
+    'brandSelect',
+    'deviceSearch',
+    'deviceSelect',
+    'planSelect',
+    'termSelect',
+    'downPaymentInput',
+    'portabilityToggle',
+    'insuranceToggle',
+    'controlToggle',
+    'cardPlanTitle',
+    'cardPlanTerm',
+    'cardPlanPrice',
+    'cardCommercialAlert',
+    'cardClientName',
+    'cardClientPhone',
+    'cardOperation',
+    'cardDeviceBrand',
+    'cardDeviceName',
+    'cardValidity',
+    'promoStatus',
+    'cardListPrice',
+    'cardPromoPrice',
+    'cardDownPayment',
+    'cardBalance',
+    'cardTotalSavings',
+    'cardDiscountPercent',
+    'breakdownDeviceLabel',
+    'breakdownDevice',
+    'breakdownPlan',
+    'breakdownInsuranceRow',
+    'breakdownInsurance',
+    'breakdownControlRow',
+    'breakdownControl',
+    'cardSavingsLabel',
+    'cardTotalMonthly',
+    'btnExportPNG',
+    'btnExportPDF',
+    'quoteCard'
+  ].forEach(id => {
+    elements[id] = document.getElementById(id);
+  });
 }
 
-function setupEventListeners() {
-  elements.excelFileInput.addEventListener('change', handleFileImport);
+function addListeners() {
+  elements.excelFileInput.addEventListener('change', importExcel);
 
-  elements.brandSelect.addEventListener('change', () => {
-    populateDevices();
-    renderQuote();
-  });
-
-  elements.deviceSearch.addEventListener('input', () => {
-    populateDevices();
-    renderQuote();
-  });
+  elements.brandSelect.addEventListener('change', updateDevices);
+  elements.deviceSearch.addEventListener('input', updateDevices);
 
   elements.deviceSelect.addEventListener('change', () => {
-    syncSelectedDevice();
+    selectedDevice = catalogEngine.getDeviceById(elements.deviceSelect.value);
     renderQuote();
   });
 
-  elements.planSelect.addEventListener('change', renderQuote);
-  elements.termSelect.addEventListener('change', renderQuote);
-  elements.downPaymentInput.addEventListener('input', renderQuote);
-
-  elements.portabilityToggle.addEventListener('change', renderQuote);
-  elements.insuranceToggle.addEventListener('change', renderQuote);
-  elements.controlToggle.addEventListener('change', renderQuote);
-
-  elements.clientNameInput.addEventListener('input', renderQuote);
-  elements.clientPhoneInput.addEventListener('input', renderQuote);
-  elements.operationSelect.addEventListener('change', renderQuote);
-
-  elements.toggleBreakdown.addEventListener('click', toggleBreakdown);
+  [
+    elements.clientNameInput,
+    elements.clientPhoneInput,
+    elements.operationSelect,
+    elements.planSelect,
+    elements.termSelect,
+    elements.downPaymentInput,
+    elements.portabilityToggle,
+    elements.insuranceToggle,
+    elements.controlToggle
+  ].forEach(element => {
+    element.addEventListener('input', renderQuote);
+    element.addEventListener('change', renderQuote);
+  });
 
   elements.btnExportPNG.addEventListener('click', exportPNG);
   elements.btnExportPDF.addEventListener('click', exportPDF);
 }
 
-function loadApplicationData() {
+function loadSavedData() {
   const savedCatalog = loadCatalogData();
 
   if (savedCatalog?.catalog?.length) {
     catalogEngine.setCatalog(savedCatalog.catalog);
-    appState.catalogMeta = savedCatalog.meta || null;
 
     populateBrands();
-    populateDevices();
+    updateDevices();
 
-    const fileName = savedCatalog.meta?.fileName || 'Catálogo guardado';
     elements.catalogStatus.textContent =
-      `Catálogo listo: ${savedCatalog.catalog.length} equipos (${fileName}).`;
-  } else {
-    elements.catalogStatus.textContent =
-      'Carga tu Excel para consultar precios y promociones.';
+      `Catálogo listo: ${savedCatalog.catalog.length} equipos cargados.`;
   }
 
   const savedForm = loadFormState();
 
   if (savedForm) {
-    restoreFormState(savedForm);
+    restoreState(savedForm);
 
     if (savedCatalog?.catalog?.length) {
-      populateDevices(savedForm.deviceId || '');
-      syncSelectedDevice();
+      updateDevices(savedForm.deviceId || '');
+      selectedDevice = catalogEngine.getDeviceById(elements.deviceSelect.value);
     }
   }
 }
 
-function restoreFormState(state) {
-  if (state.clientName !== undefined) {
-    elements.clientNameInput.value = state.clientName;
+function restoreState(state) {
+  const values = [
+    'clientNameInput',
+    'clientPhoneInput',
+    'operationSelect',
+    'deviceSearch',
+    'planSelect',
+    'termSelect',
+    'downPaymentInput'
+  ];
+
+  values.forEach(id => {
+    if (state[id] !== undefined) {
+      elements[id].value = state[id];
+    }
+  });
+
+  if (state.brandSelect) {
+    elements.brandSelect.value = state.brandSelect;
   }
 
-  if (state.clientPhone !== undefined) {
-    elements.clientPhoneInput.value = state.clientPhone;
-  }
-
-  if (state.operation !== undefined) {
-    elements.operationSelect.value = state.operation;
-  }
-
-  if (state.brand !== undefined) {
-    elements.brandSelect.value = state.brand;
-  }
-
-  if (state.search !== undefined) {
-    elements.deviceSearch.value = state.search;
-  }
-
-  if (state.plan !== undefined) {
-    elements.planSelect.value = state.plan;
-  }
-
-  if (state.term !== undefined) {
-    elements.termSelect.value = state.term;
-  }
-
-  if (state.downPayment !== undefined) {
-    elements.downPaymentInput.value = state.downPayment;
-  }
-
-  if (state.portability !== undefined) {
-    elements.portabilityToggle.checked = Boolean(state.portability);
-  }
-
-  if (state.insurance !== undefined) {
-    elements.insuranceToggle.checked = Boolean(state.insurance);
-  }
-
-  if (state.control !== undefined) {
-    elements.controlToggle.checked = Boolean(state.control);
-  }
+  elements.portabilityToggle.checked = Boolean(state.portabilityToggle);
+  elements.insuranceToggle.checked = Boolean(state.insuranceToggle);
+  elements.controlToggle.checked = Boolean(state.controlToggle);
 }
 
-async function handleFileImport(event) {
+async function importExcel(event) {
   const file = event.target.files?.[0];
 
-  if (!file) {
-    return;
-  }
+  if (!file) return;
 
   try {
     elements.catalogStatus.textContent = 'Procesando Excel...';
@@ -281,28 +174,25 @@ async function handleFileImport(event) {
 
     catalogEngine.setCatalog(result.catalog);
 
-    appState.catalogMeta = {
+    saveCatalogData(result.catalog, {
       ...result.meta,
       fileName: result.fileName
-    };
-
-    saveCatalogData(result.catalog, appState.catalogMeta);
+    });
 
     populateBrands();
-    populateDevices();
-    syncSelectedDevice();
+    updateDevices();
 
     elements.catalogStatus.textContent =
-      `Listo: ${result.catalog.length} equipos importados.`;
+      `Excel vigente cargado: ${result.catalog.length} equipos.`;
 
     renderQuote();
   } catch (error) {
     console.error(error);
 
     elements.catalogStatus.textContent =
-      'No se pudo importar el Excel. Revisa el formato del archivo.';
+      'No se pudo importar el Excel.';
 
-    alert(error.message || 'No se pudo importar el archivo Excel.');
+    alert(error.message || 'Error al importar Excel.');
   } finally {
     event.target.value = '';
   }
@@ -310,146 +200,238 @@ async function handleFileImport(event) {
 
 function populateBrands() {
   const currentBrand = elements.brandSelect.value || 'TODAS';
-  const brands = catalogEngine.getBrands();
 
-  elements.brandSelect.innerHTML = [
-    '<option value="TODAS">Todas las Marcas</option>',
-    ...brands.map(brand =>
+  const options = [
+    '<option value="TODAS">Todas las marcas</option>',
+    ...catalogEngine.getBrands().map(brand =>
       `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`
     )
-  ].join('');
+  ];
 
-  const exists = [...elements.brandSelect.options]
+  elements.brandSelect.innerHTML = options.join('');
+
+  const valid = [...elements.brandSelect.options]
     .some(option => option.value === currentBrand);
 
-  elements.brandSelect.value = exists ? currentBrand : 'TODAS';
+  elements.brandSelect.value = valid ? currentBrand : 'TODAS';
 }
 
-function populateDevices(preferredDeviceId = '') {
-  const currentDeviceId = preferredDeviceId || elements.deviceSelect.value;
-  const brand = elements.brandSelect.value;
-  const query = elements.deviceSearch.value;
-
-  const devices = catalogEngine.searchDevice(brand, query);
+function updateDevices(preferredDeviceId = '') {
+  const devices = catalogEngine.searchDevice(
+    elements.brandSelect.value,
+    elements.deviceSearch.value
+  );
 
   if (!devices.length) {
     elements.deviceSelect.innerHTML =
       '<option value="">No se encontraron equipos</option>';
 
-    appState.selectedDevice = null;
+    selectedDevice = null;
+    renderQuote();
     return;
   }
 
-  elements.deviceSelect.innerHTML = devices
-    .map(device => {
-      const label = `${device.brand} - ${device.name}`;
-      return `
-        <option value="${escapeHtml(String(device.id))}">
-          ${escapeHtml(label)}
-        </option>
-      `;
-    })
-    .join('');
+  const currentId = preferredDeviceId || elements.deviceSelect.value;
 
-  const requestedExists = devices.some(
-    device => String(device.id) === String(currentDeviceId)
+  elements.deviceSelect.innerHTML = devices.map(device => `
+    <option value="${escapeHtml(String(device.id))}">
+      ${escapeHtml(`${device.brand} - ${device.name}`)}
+    </option>
+  `).join('');
+
+  const exists = devices.some(device =>
+    String(device.id) === String(currentId)
   );
 
-  elements.deviceSelect.value = requestedExists
-    ? String(currentDeviceId)
+  elements.deviceSelect.value = exists
+    ? String(currentId)
     : String(devices[0].id);
 
-  syncSelectedDevice();
+  selectedDevice = catalogEngine.getDeviceById(elements.deviceSelect.value);
+
+  renderQuote();
 }
 
-function syncSelectedDevice() {
-  const selectedId = elements.deviceSelect.value;
+function renderQuote() {
+  const planName = elements.planSelect.value;
+  const theme = resolvePlanTheme(planName);
+  const isTitanio = planName.toLowerCase().includes('titanio');
 
-  appState.selectedDevice = selectedId
-    ? catalogEngine.getDeviceById(selectedId)
-    : null;
-}
-
-export function renderQuote() {
-  const device = appState.selectedDevice;
-  const selectedPlan = elements.planSelect.value;
-  const theme = resolvePlanTheme(selectedPlan);
-
-  const isTitanio = selectedPlan.toLowerCase().includes('titanio');
-
-  if (isTitanio && Number(elements.termSelect.value) !== 30) {
+  if (isTitanio) {
     elements.termSelect.value = '30';
   }
 
-  const termMonths = Number(elements.termSelect.value) || 36;
+  const term = Number(elements.termSelect.value) || 36;
 
-  applyTheme(theme);
+  document.documentElement.style.setProperty('--p1', theme.c1);
+  document.documentElement.style.setProperty('--p2', theme.c2);
 
-  const operation = elements.operationSelect.value;
   const hasPortability =
-    operation === 'portabilidad' || elements.portabilityToggle.checked;
+    elements.operationSelect.value === 'portabilidad' ||
+    elements.portabilityToggle.checked;
 
-  let promoPrice = 0;
-
-  if (device) {
-    const promotion = calculatePromotion(
-      device,
-      theme.name,
-      isTitanio ? 30 : termMonths
-    );
-
-    promoPrice = promotion ?? 0;
-  }
+  const promo = selectedDevice
+    ? calculatePromotion(selectedDevice, theme.name, term)
+    : { type: 'MISSING', value: null, raw: '' };
 
   const quote = calculateTotal({
-    listPrice: device?.list || 0,
-    promoPrice,
+    listPrice: selectedDevice?.list || 0,
+    promoPrice: promo.value || 0,
     downPayment: Number(elements.downPaymentInput.value) || 0,
-    termMonths: isTitanio ? 30 : termMonths,
+    termMonths: term,
     baseRent: theme.price,
-    planName: selectedPlan,
+    planName,
     hasPortability,
     hasInsurance: elements.insuranceToggle.checked,
-    insuranceTier: device?.insurance || 0,
+    insuranceTier: selectedDevice?.insurance || 0,
     hasControl: elements.controlToggle.checked,
-    deviceName: device?.name || ''
+    deviceName: selectedDevice?.name || ''
   });
 
-  appState.currentQuote = quote;
+  commercialValidation = validateCommercialQuote({
+    device: selectedDevice,
+    promo,
+    quote
+  });
 
-  renderPlanData(theme, quote);
-  renderClientData();
-  renderDeviceData(device);
-  renderPriceData(quote);
-  renderBenefits(theme, quote);
-  renderBreakdown(quote);
-
+  renderCommercialAlerts();
+  renderCard(theme, quote, promo);
   persistState();
 }
 
-function applyTheme(theme) {
-  document.documentElement.style.setProperty('--p1', theme.c1);
-  document.documentElement.style.setProperty('--p2', theme.c2);
+function validateCommercialQuote({ device, promo }) {
+  const messages = [];
+  let blockExport = false;
+
+  if (!catalogEngine.catalog?.length) {
+    messages.push({
+      type: 'danger',
+      text: 'Carga el Excel vigente antes de generar una cotización.'
+    });
+
+    blockExport = true;
+  }
+
+  if (!device) {
+    messages.push({
+      type: 'danger',
+      text: 'Selecciona un equipo antes de cotizar.'
+    });
+
+    blockExport = true;
+  }
+
+  if (promo?.type === 'NOT_AVAILABLE') {
+    messages.push({
+      type: 'danger',
+      text: 'No existe promoción disponible para esta combinación de equipo, plan y plazo.'
+    });
+
+    blockExport = true;
+  }
+
+  if (promo?.type === 'MISSING' || promo?.type === 'INVALID') {
+    messages.push({
+      type: 'danger',
+      text: 'No se encontró información comercial válida. Revisa el Excel vigente.'
+    });
+
+    blockExport = true;
+  }
+
+  if (device) {
+    const status = String(device.status || '').toLowerCase();
+
+    if (
+      status.includes('agotado') ||
+      status.includes('no resurtible') ||
+      status.includes('no resurt')
+    ) {
+      messages.push({
+        type: 'danger',
+        text: `El equipo está marcado como "${device.status}". No se recomienda exportar esta cotización.`
+      });
+
+      blockExport = true;
+    } else if (
+      status.includes('última') ||
+      status.includes('ultima') ||
+      status.includes('sobre pedido') ||
+      status.includes('revisar')
+    ) {
+      messages.push({
+        type: 'warning',
+        text: `Disponibilidad limitada: ${device.status}. Confirma existencias antes de enviar.`
+      });
+    }
+
+    if (device.validity) {
+      messages.push({
+        type: 'info',
+        text: `Vigencia comercial: ${device.validity}`
+      });
+    }
+  }
+
+  return {
+    valid: !blockExport,
+    blockExport,
+    messages
+  };
 }
 
-function renderPlanData(theme, quote) {
-  elements.cardPlanTitle.textContent = `Plan ${theme.name}`;
+function renderCommercialAlerts() {
+  renderAlertBox(
+    elements.commercialAlert,
+    commercialValidation.messages
+  );
 
-  elements.cardPlanTerm.textContent = quote.isTitanio
-    ? 'Plazo a 30 meses'
-    : `Plazo a ${quote.term} meses`;
+  const importantMessages = commercialValidation.messages
+    .filter(message => message.type !== 'info');
+
+  renderAlertBox(
+    elements.cardCommercialAlert,
+    importantMessages
+  );
+
+  elements.btnExportPNG.disabled = commercialValidation.blockExport;
+  elements.btnExportPDF.disabled = commercialValidation.blockExport;
+
+  elements.btnExportPNG.classList.toggle(
+    'button-disabled',
+    commercialValidation.blockExport
+  );
+
+  elements.btnExportPDF.classList.toggle(
+    'button-disabled',
+    commercialValidation.blockExport
+  );
+}
+
+function renderAlertBox(container, messages) {
+  if (!messages.length) {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+
+  container.hidden = false;
+
+  container.innerHTML = messages.map(message => `
+    <div class="alert-item alert-${message.type}">
+      ${escapeHtml(message.text)}
+    </div>
+  `).join('');
+}
+
+function renderCard(theme, quote, promo) {
+  elements.cardPlanTitle.textContent = `Plan ${theme.name}`;
+  elements.cardPlanTerm.textContent =
+    quote.isTitanio
+      ? '30 meses obligatorios'
+      : `Plazo a ${quote.term} meses`;
 
   elements.cardPlanPrice.textContent = formatMXN(theme.price);
-}
-
-function renderClientData() {
-  const operationNames = {
-    renovacion: 'Renovación',
-    renovacion_anticipada: 'Renovación anticipada',
-    linea_nueva: 'Línea nueva',
-    linea_adicional: 'Línea adicional',
-    portabilidad: 'Portabilidad'
-  };
 
   elements.cardClientName.textContent =
     elements.clientNameInput.value.trim() || '-';
@@ -458,38 +440,60 @@ function renderClientData() {
     elements.clientPhoneInput.value.trim() || '-';
 
   elements.cardOperation.textContent =
-    operationNames[elements.operationSelect.value] || 'Renovación';
-}
+    operationName(elements.operationSelect.value);
 
-function renderDeviceData(device) {
-  if (!device) {
-    elements.cardDeviceBrand.textContent = 'ARSA';
-    elements.cardDeviceName.textContent = 'Selecciona un equipo';
-    elements.cardValidity.textContent = '';
-    return;
-  }
+  elements.cardDeviceBrand.textContent =
+    selectedDevice?.brand || 'ARSA';
 
-  elements.cardDeviceBrand.textContent = device.brand || 'ARSA';
-  elements.cardDeviceName.textContent = device.name || 'Equipo sin nombre';
+  elements.cardDeviceName.textContent =
+    selectedDevice?.name || 'Selecciona un equipo';
 
-  const validity = String(device.validity || '').trim();
-  const status = String(device.status || '').trim();
+  elements.cardValidity.textContent = selectedDevice?.validity
+    ? `Vigencia: ${selectedDevice.validity} · Estatus: ${selectedDevice.status}`
+    : '';
 
-  if (validity && status) {
-    elements.cardValidity.textContent =
-      `Vigencia: ${validity} (${status})`;
-  } else if (validity) {
-    elements.cardValidity.textContent = `Vigencia: ${validity}`;
-  } else {
-    elements.cardValidity.textContent = '';
-  }
-}
+  renderPromotionStatus(promo);
 
-function renderPriceData(quote) {
   elements.cardListPrice.textContent = formatMXN(quote.oldPrice);
-  elements.cardPromoPrice.textContent = formatMXN(quote.finalPrice);
+
+  if (promo.type === 'INCLUDED') {
+    elements.cardPromoPrice.textContent = 'INCLUIDO';
+    elements.cardPromoPrice.classList.add('included-price');
+  } else {
+    elements.cardPromoPrice.textContent = formatMXN(quote.finalPrice);
+    elements.cardPromoPrice.classList.remove('included-price');
+  }
+
   elements.cardDownPayment.textContent = formatMXN(quote.payToday);
   elements.cardBalance.textContent = formatMXN(quote.balance);
+
+  elements.cardTotalSavings.textContent = formatMXN(quote.savings);
+
+  elements.cardDiscountPercent.textContent =
+    `${quote.discountPercent.toFixed(2)}%`;
+
+  elements.breakdownDeviceLabel.textContent =
+    quote.isTitanio
+      ? 'Cargo mensual del equipo'
+      : `Equipo a ${quote.term} meses`;
+
+  elements.breakdownDevice.textContent =
+    formatMXN(quote.equipmentMonthly);
+
+  elements.breakdownPlan.textContent =
+    formatMXN(quote.rentWithPromo);
+
+  elements.breakdownInsuranceRow.hidden =
+    quote.insuranceCost <= 0;
+
+  elements.breakdownInsurance.textContent =
+    formatMXN(quote.insuranceCost);
+
+  elements.breakdownControlRow.hidden =
+    quote.controlCost <= 0;
+
+  elements.breakdownControl.textContent =
+    formatMXN(quote.controlCost);
 
   elements.cardTotalMonthly.textContent =
     formatMXN(quote.totalMonthlyPromo);
@@ -498,189 +502,136 @@ function renderPriceData(quote) {
     `Ahorro en equipo: ${formatMXN(quote.savings)} (${quote.discountPercent.toFixed(1)}%)`;
 }
 
-function renderBenefits(theme, quote) {
-  const monthlyPortabilitySavings =
-    Math.max(0, theme.price - quote.rentWithPromo);
+function renderPromotionStatus(promo) {
+  const statusClass = {
+    INCLUDED: 'promo-included',
+    PRICE: 'promo-ok',
+    NOT_AVAILABLE: 'promo-danger',
+    MISSING: 'promo-danger',
+    INVALID: 'promo-danger'
+  };
 
-  const totalPortabilitySavings =
-    monthlyPortabilitySavings * quote.term;
+  const texts = {
+    INCLUDED: 'Equipo incluido con el plan seleccionado.',
+    PRICE: 'Precio promocional consultado desde Excel.',
+    NOT_AVAILABLE: 'No disponible para este plan y plazo.',
+    MISSING: 'Promoción no encontrada. Revisa el Excel.',
+    INVALID: 'Dato comercial inválido. Revisa el Excel.'
+  };
 
-  const totalSavings =
-    quote.savings + totalPortabilitySavings;
+  elements.promoStatus.className =
+    `promo-status ${statusClass[promo.type] || 'promo-danger'}`;
 
-  elements.cardTotalSavings.textContent = formatMXN(totalSavings);
-  elements.cardDiscountPercent.textContent =
-    `${quote.discountPercent.toFixed(1)}%`;
-}
-
-function renderBreakdown(quote) {
-  elements.breakdownPlan.textContent = formatMXN(quote.rentWithPromo);
-  elements.breakdownDevice.textContent = formatMXN(quote.equipmentMonthly);
-  elements.breakdownInsurance.textContent = formatMXN(quote.insuranceCost);
-  elements.breakdownControl.textContent = formatMXN(quote.controlCost);
-  elements.breakdownTotal.textContent =
-    formatMXN(quote.totalMonthlyPromo);
-}
-
-function toggleBreakdown() {
-  const willShow = elements.quoteBreakdown.hidden;
-
-  elements.quoteBreakdown.hidden = !willShow;
-
-  elements.toggleBreakdownText.textContent = willShow
-    ? 'Quitar desglose'
-    : 'Agregar desglose';
-
-  elements.toggleBreakdownIcon.textContent = willShow
-    ? '−'
-    : '＋';
+  elements.promoStatus.textContent =
+    texts[promo.type] || 'Promoción no disponible.';
 }
 
 function persistState() {
   saveFormState({
-    clientName: elements.clientNameInput.value,
-    clientPhone: elements.clientPhoneInput.value,
-    operation: elements.operationSelect.value,
-
-    brand: elements.brandSelect.value,
-    search: elements.deviceSearch.value,
+    clientNameInput: elements.clientNameInput.value,
+    clientPhoneInput: elements.clientPhoneInput.value,
+    operationSelect: elements.operationSelect.value,
+    brandSelect: elements.brandSelect.value,
+    deviceSearch: elements.deviceSearch.value,
     deviceId: elements.deviceSelect.value,
-
-    plan: elements.planSelect.value,
-    term: elements.termSelect.value,
-    downPayment: elements.downPaymentInput.value,
-
-    portability: elements.portabilityToggle.checked,
-    insurance: elements.insuranceToggle.checked,
-    control: elements.controlToggle.checked
+    planSelect: elements.planSelect.value,
+    termSelect: elements.termSelect.value,
+    downPaymentInput: elements.downPaymentInput.value,
+    portabilityToggle: elements.portabilityToggle.checked,
+    insuranceToggle: elements.insuranceToggle.checked,
+    controlToggle: elements.controlToggle.checked
   });
 }
 
 async function exportPNG() {
-  const card = document.getElementById('quoteCard');
-
-  if (!card) {
-    alert('No se encontró la tarjeta para exportar.');
+  if (commercialValidation.blockExport) {
+    alert('No puedes exportar hasta corregir las alertas comerciales.');
     return;
   }
 
-  try {
-    const canvas = await window.html2canvas(card, {
-      scale: 2,
-      backgroundColor: '#090d16',
-      useCORS: true,
-      logging: false,
-      onclone: clonedDocument => {
-        clonedDocument
-          .querySelectorAll('[data-export-hide]')
-          .forEach(element => {
-            element.style.display = 'none';
-          });
-      }
-    });
+  const canvas = await window.html2canvas(elements.quoteCard, {
+    scale: 2,
+    backgroundColor: '#090d16',
+    useCORS: true,
+    logging: false,
+    onclone: clonedDocument => {
+      clonedDocument
+        .querySelectorAll('[data-export-hide]')
+        .forEach(node => {
+          node.style.display = 'none';
+        });
+    }
+  });
 
-    const clientName =
-      elements.clientNameInput.value.trim() || 'Cliente';
+  const link = document.createElement('a');
 
-    const fileName = `Cotizacion-ARSA-${safeFileName(clientName)}-${Date.now()}.png`;
-
-    const link = document.createElement('a');
-    link.download = fileName;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  } catch (error) {
-    console.error(error);
-    alert(`Error al generar PNG: ${error.message}`);
-  }
+  link.download = `Cotizacion-ARSA-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 }
 
 async function exportPDF() {
-  const card = document.getElementById('quoteCard');
-
-  if (!card) {
-    alert('No se encontró la tarjeta para exportar.');
+  if (commercialValidation.blockExport) {
+    alert('No puedes exportar hasta corregir las alertas comerciales.');
     return;
   }
 
-  try {
-    const canvas = await window.html2canvas(card, {
-      scale: 2,
-      backgroundColor: '#090d16',
-      useCORS: true,
-      logging: false,
-      onclone: clonedDocument => {
-        clonedDocument
-          .querySelectorAll('[data-export-hide]')
-          .forEach(element => {
-            element.style.display = 'none';
-          });
-      }
-    });
+  const canvas = await window.html2canvas(elements.quoteCard, {
+    scale: 2,
+    backgroundColor: '#090d16',
+    useCORS: true,
+    logging: false,
+    onclone: clonedDocument => {
+      clonedDocument
+        .querySelectorAll('[data-export-hide]')
+        .forEach(node => {
+          node.style.display = 'none';
+        });
+    }
+  });
 
-    const imageData = canvas.toDataURL('image/png');
+  const imageData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
 
-    const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true
+  });
 
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true
-    });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 8;
+  const width = pageWidth - margin * 2;
+  const height = (canvas.height * width) / canvas.width;
 
-    const margin = 8;
-    const printableWidth = pageWidth - margin * 2;
-    const printableHeight = pageHeight - margin * 2;
+  pdf.addImage(
+    imageData,
+    'PNG',
+    margin,
+    margin,
+    width,
+    Math.min(height, pageHeight - margin * 2)
+  );
 
-    const imageWidth = canvas.width;
-    const imageHeight = canvas.height;
-
-    const scale = Math.min(
-      printableWidth / imageWidth,
-      printableHeight / imageHeight
-    );
-
-    const pdfImageWidth = imageWidth * scale;
-    const pdfImageHeight = imageHeight * scale;
-
-    const x = (pageWidth - pdfImageWidth) / 2;
-    const y = margin;
-
-    pdf.addImage(
-      imageData,
-      'PNG',
-      x,
-      y,
-      pdfImageWidth,
-      pdfImageHeight,
-      undefined,
-      'FAST'
-    );
-
-    const clientName =
-      elements.clientNameInput.value.trim() || 'Cliente';
-
-    const fileName = `Cotizacion-ARSA-${safeFileName(clientName)}-${Date.now()}.pdf`;
-
-    pdf.save(fileName);
-  } catch (error) {
-    console.error(error);
-    alert(`Error al generar PDF: ${error.message}`);
-  }
+  pdf.save(`Cotizacion-ARSA-${Date.now()}.pdf`);
 }
 
-function safeFileName(value) {
-  return String(value)
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, '')
-    .replace(/\s+/g, '_')
-    .slice(0, 60) || 'Cliente';
+function operationName(value) {
+  const names = {
+    renovacion: 'Renovación',
+    renovacion_anticipada: 'Renovación anticipada',
+    linea_nueva: 'Línea nueva',
+    linea_adicional: 'Línea adicional',
+    portabilidad: 'Portabilidad'
+  };
+
+  return names[value] || 'Renovación';
 }
 
-function escapeHtml(value) {
+function escapeHtml(value = '') {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -688,10 +639,3 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
-window.ARSA = {
-  init,
-  renderQuote,
-  catalogEngine,
-  appState
-};
