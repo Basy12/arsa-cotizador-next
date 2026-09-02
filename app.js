@@ -3,11 +3,11 @@
  * Orquesta todos los módulos y maneja la interactividad de la UI
  */
 
-import { CatalogEngine } from './catalog/catalogEngine.js';
-import { loadWorkbook } from './excel/excelImporter.js';
-import { calculatePromotion, calculateTotal, formatMXN } from './quote/quoteEngine.js';
-import { saveCatalogData, loadCatalogData, saveFormState, loadFormState } from './storage/storageService.js';
-import { resolvePlanTheme } from './theme/planThemes.js';
+import { CatalogEngine } from './catalogEngine.js';
+import { loadWorkbook } from './excelImporter.js';
+import { calculatePromotion, calculateTotal, formatMXN } from './quoteEngine.js';
+import { saveCatalogData, loadCatalogData, saveFormState, loadFormState } from './storageService.js';
+import { resolvePlanTheme } from './planThemes.js';
 
 // Instancia global del motor de catálogo
 export const catalogEngine = new CatalogEngine();
