@@ -1,480 +1,171 @@
+/* =========================================================
+   ARSA Crystal Glass Theme por Plan
+   ========================================================= */
+
 :root {
-  --bg-dark: #09101c;
-  --bg-gradient:
-    radial-gradient(circle at 10% 10%, #19345d 0%, transparent 35%),
-    radial-gradient(circle at 90% 0%, #044775 0%, transparent 30%),
-    linear-gradient(135deg, #050914, #0e1727);
-
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.13);
-
-  --text-main: #f8fafc;
-  --text-muted: #9ca9bd;
-
-  --accent-cyan: #36c5ff;
-  --accent-emerald: #19c899;
-  --accent-warning: #ffc24f;
-  --accent-danger: #ff6b7d;
-
-  --p1: #18b9e9;
-  --p2: #078dc7;
-  --p-gradient: linear-gradient(135deg, var(--p1), var(--p2));
-
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
+  --plan-glow: rgba(54, 197, 255, 0.35);
+  --plan-glass: rgba(54, 197, 255, 0.15);
+  --plan-border: rgba(154, 234, 255, 0.40);
+  --plan-text: #ffffff;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  min-height: 100vh;
-  margin: 0;
-  color: var(--text-main);
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: var(--bg-gradient);
-  background-attachment: fixed;
-}
-
-.crystal-app {
-  display: grid;
-  grid-template-columns: minmax(350px, 470px) minmax(0, 1fr);
-  gap: 28px;
-  max-width: 1450px;
-  margin: 0 auto;
-  padding: 30px;
-}
-
-.glass-panel,
+/* Fondo de tarjeta con cristal y brillo dinámico del plan */
 .quote-card {
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: rgba(10, 20, 40, 0.76);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
-  backdrop-filter: blur(20px);
-}
-
-.glass-panel {
-  padding: 24px;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-  color: var(--accent-cyan);
-  font-size: 1.08rem;
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.catalog-status {
-  margin-bottom: 18px;
-  color: var(--accent-cyan);
-  font-size: 0.85rem;
-}
-
-.section-title {
-  margin: 25px 0 15px;
-  padding-bottom: 9px;
-  border-bottom: 1px solid var(--glass-border);
-  color: var(--text-muted);
-  font-size: 0.84rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.field-group {
-  margin-bottom: 15px;
-}
-
-.field-label {
-  display: block;
-  margin-bottom: 7px;
-  color: var(--text-muted);
-  font-size: 0.77rem;
-  font-weight: 850;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.glass-input,
-.glass-select {
-  width: 100%;
-  min-height: 53px;
-  padding: 12px 15px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  outline: 0;
-  color: white;
-  background: rgba(4, 13, 35, 0.76);
-  font-size: 0.96rem;
-}
-
-.glass-select option {
-  color: #111827;
-}
-
-.glass-input:focus,
-.glass-select:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(54, 197, 255, 0.16);
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 56px;
-  margin-bottom: 10px;
-  padding: 11px 14px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-}
-
-.toggle-label {
-  margin: 0;
-}
-
-.toggle-switch {
   position: relative;
-  width: 48px;
-  height: 26px;
+  overflow: hidden;
+  border-color: var(--plan-border);
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      var(--plan-glow) 0%,
+      transparent 35%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(18, 28, 49, 0.84),
+      rgba(5, 10, 22, 0.94)
+    );
+  box-shadow:
+    0 26px 80px rgba(0, 0, 0, 0.42),
+    0 0 40px var(--plan-glow);
 }
 
-.toggle-switch input {
-  width: 0;
-  height: 0;
-  opacity: 0;
-}
-
-.toggle-slider {
+/* Capa de luz tipo liquid glass */
+.quote-card::before {
   position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.toggle-slider::before {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  width: 18px;
-  height: 18px;
+  top: -180px;
+  right: -90px;
+  width: 450px;
+  height: 450px;
+  pointer-events: none;
   content: "";
   border-radius: 50%;
-  background: white;
-  transition: 0.2s;
+  background:
+    radial-gradient(
+      circle,
+      var(--plan-glow) 0%,
+      transparent 66%
+    );
+  filter: blur(16px);
+  opacity: 0.60;
 }
 
-.toggle-switch input:checked + .toggle-slider {
-  background: var(--p-gradient);
+/* Cabecera más cristalina */
+.plan-header-band {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--plan-border);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--p1) 72%, transparent),
+      color-mix(in srgb, var(--p2) 74%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 14px 32px var(--plan-glow);
+  backdrop-filter: blur(22px) saturate(155%);
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(22px);
+/* Reflejo de vidrio sobre el encabezado */
+.plan-header-band::after {
+  position: absolute;
+  top: 0;
+  left: -15%;
+  width: 75%;
+  height: 100%;
+  pointer-events: none;
+  content: "";
+  transform: skewX(-22deg);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.22),
+      transparent
+    );
 }
 
+/* Total cristalino */
+.total-hero-band {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--plan-border);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--p1) 66%, transparent),
+      color-mix(in srgb, var(--p2) 74%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 14px 34px var(--plan-glow);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* Beneficios relacionados al plan actual */
+.benefit-card {
+  border-color: var(--plan-border);
+  background:
+    linear-gradient(
+      135deg,
+      var(--plan-glass),
+      rgba(255, 255, 255, 0.035)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Desglose tipo vidrio */
+.quote-breakdown,
+.client-info-section,
+.quote-pricing-grid {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.06),
+      var(--plan-glass)
+    );
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+}
+
+/* N/A comercial */
+.not-available-price {
+  color: var(--accent-warning) !important;
+}
+
+/* Información comercial para equipos que aplican desde Plata */
+.promo-info {
+  color: #d9f5ff;
+  background: rgba(54, 197, 255, 0.15);
+  border: 1px solid rgba(54, 197, 255, 0.28);
+}
+
+/* Mensajes de advertencia no bloqueantes */
+.alert-warning {
+  color: #ffe8ad;
+  border: 1px solid rgba(255, 194, 79, 0.38);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 194, 79, 0.17),
+      rgba(255, 194, 79, 0.08)
+    );
+}
+
+/* Botones cristalinos */
 .btn-crystal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 54px;
-  padding: 12px 16px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  color: white;
-  background: rgba(255, 255, 255, 0.08);
-  font-weight: 850;
-  cursor: pointer;
-}
-
-.file-button {
-  min-height: auto;
-  padding: 9px 13px;
-  font-size: 0.8rem;
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
 }
 
 .btn-primary {
-  border: 0;
-  background: var(--p-gradient);
-}
-
-.quote-card {
-  overflow: hidden;
-}
-
-.plan-header-band {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 27px 30px;
-  background: var(--p-gradient);
-}
-
-.plan-header-title,
-.plan-header-price {
-  color: white;
-  font-size: 1.75rem;
-  font-weight: 950;
-}
-
-.plan-header-sub {
-  margin-top: 4px;
-  color: rgba(255, 255, 255, 0.86);
-  font-weight: 700;
-}
-
-.quote-body {
-  padding: 28px;
-}
-
-.client-info-section,
-.quote-pricing-grid,
-.quote-breakdown {
-  margin-bottom: 23px;
-  padding: 20px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.client-row,
-.breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 0;
-  color: var(--text-muted);
-}
-
-.client-row strong,
-.breakdown-row strong {
-  color: white;
-}
-
-.quote-device-info {
-  margin-bottom: 23px;
-}
-
-.device-brand-badge {
-  display: inline-block;
-  padding: 6px 11px;
-  border-radius: 999px;
-  color: var(--accent-cyan);
-  background: rgba(255, 255, 255, 0.11);
-  font-size: 0.75rem;
-  font-weight: 900;
-}
-
-.device-title {
-  margin: 14px 0 6px;
-  color: white;
-  font-size: 2rem;
-  font-weight: 950;
-  letter-spacing: -0.04em;
-}
-
-.validity-text {
-  color: var(--text-muted);
-}
-
-.promo-status {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.83rem;
-  font-weight: 750;
-}
-
-.promo-ok {
-  color: #c2f9e7;
-  background: rgba(25, 200, 153, 0.15);
-}
-
-.promo-included {
-  color: #d6f8bd;
-  background: rgba(103, 195, 68, 0.18);
-}
-
-.promo-danger {
-  color: #ffd2d8;
-  background: rgba(255, 107, 125, 0.18);
-}
-
-.quote-pricing-grid,
-.benefits-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-
-.price-item-label,
-.benefit-label {
-  margin-bottom: 7px;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-}
-
-.price-item-value,
-.benefit-value {
-  color: white;
-  font-size: 1.35rem;
-  font-weight: 950;
-}
-
-.discount {
-  color: var(--accent-emerald);
-}
-
-.included-price {
-  color: #a8ee6b !important;
-  font-size: 1.15rem;
-}
-
-.benefit-card {
-  padding: 16px;
-  border-radius: 13px;
-}
-
-.benefit-green {
-  border: 1px solid rgba(25, 200, 153, 0.30);
-  background: rgba(25, 200, 153, 0.10);
-}
-
-.benefit-blue {
-  border: 1px solid rgba(54, 197, 255, 0.30);
-  background: rgba(54, 197, 255, 0.10);
-}
-
-.breakdown-title {
-  margin-bottom: 10px;
-  color: var(--accent-cyan);
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.breakdown-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.total-hero-band {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 23px 27px;
-  border-radius: var(--radius-md);
-  background: var(--p-gradient);
-}
-
-.total-label {
-  font-size: 0.82rem;
-  font-weight: 850;
-  text-transform: uppercase;
-}
-
-.total-savings {
-  margin-top: 6px;
-  font-size: 0.86rem;
-}
-
-.total-hero-val {
-  font-size: 2.7rem;
-  font-weight: 950;
-  white-space: nowrap;
-}
-
-.export-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 13px;
-  margin-top: 22px;
-}
-
-.commercial-alert,
-.card-commercial-alert {
-  margin-bottom: 16px;
-}
-
-.alert-item {
-  margin-bottom: 8px;
-  padding: 11px 13px;
-  border-radius: 11px;
-  font-size: 0.84rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.alert-danger {
-  color: #ffd6dc;
-  border: 1px solid rgba(255, 107, 125, 0.40);
-  background: rgba(255, 107, 125, 0.15);
-}
-
-.alert-warning {
-  color: #ffe6ab;
-  border: 1px solid rgba(255, 194, 79, 0.40);
-  background: rgba(255, 194, 79, 0.14);
-}
-
-.alert-info {
-  color: #cceeff;
-  border: 1px solid rgba(54, 197, 255, 0.30);
-  background: rgba(54, 197, 255, 0.10);
-}
-
-.button-disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-
-@media (max-width: 1024px) {
-  .crystal-app {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-}
-
-@media (max-width: 620px) {
-  .quote-pricing-grid,
-  .benefits-grid,
-  .export-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .plan-header-band,
-  .total-hero-band {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .quote-body {
-    padding: 20px;
-  }
-
-  .plan-header-title,
-  .plan-header-price {
-    font-size: 1.45rem;
-  }
-
-  .total-hero-val {
-    font-size: 2.2rem;
-  }
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 26px var(--plan-glow);
 }
