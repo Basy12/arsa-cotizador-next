@@ -3,6 +3,8 @@
  * Motor comercial desacoplado.
  */
 
+export const TITANIO_TERM = 30;
+
 export const TITANIO_RULES = [
   { rx: /IPHONE 17 PRO MAX.*256GB/i, promo: 11999, extra: 400 },
   { rx: /IPHONE 17 PRO.*256GB/i, promo: 8999, extra: 300 },
@@ -14,6 +16,61 @@ export function getTitanioRule(deviceName = '') {
   return TITANIO_RULES.find(rule => rule.rx.test(deviceName)) || null;
 }
 
+export function isTitanioPlan(planName = '') {
+  return String(planName).toLowerCase().includes('titanio');
+}
+
+export function normalizePlanName(planName = '') {
+  return String(planName)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+export function isAzulPlan(planName = '') {
+  const plan = normalizePlanName(planName);
+
+  return (
+    plan === 'azul 1' ||
+    plan === 'azul 2' ||
+    plan === 'azul 3'
+  );
+}
+
+/**
+ * Detecta equipos recientes de iPhone.
+ *
+ * Regla comercial solicitada:
+ * iPhone recientes no aplican en Azul 1, Azul 2 ni Azul 3.
+ * La disponibilidad comercial inicia desde plan Plata.
+ */
+export function isRecentIPhone(deviceName = '') {
+  const name = String(deviceName).toUpperCase();
+
+  return (
+    /IPHONE\s*(1[5-9]|2[0-9])/.test(name) ||
+    /IPHONE\s*(1[5-9]|2[0-9])\s*(PRO|PLUS|AIR|MAX)/.test(name)
+  );
+}
+
+export function requiresPlataOrHigher(deviceName = '') {
+  return isRecentIPhone(deviceName);
+}
+
+export function getPlanEligibility(deviceName = '', planName = '') {
+  if (requiresPlataOrHigher(deviceName) && isAzulPlan(planName)) {
+    return {
+      eligible: false,
+      reason: 'Este equipo aplica desde el plan Plata.'
+    };
+  }
+
+  return {
+    eligible: true,
+    reason: ''
+  };
+}
+
 export function calculatePromotion(device, planName, termMonths) {
   if (!device) {
     return {
@@ -23,41 +80,55 @@ export function calculatePromotion(device, planName, termMonths) {
     };
   }
 
-  const isTitanio = String(planName)
-    .toLowerCase()
-    .includes('titanio');
+  const eligibility = getPlanEligibility(device.name, planName);
 
-  if (isTitanio) {
+  if (!eligibility.eligible) {
+    return {
+      type: 'NOT_ELIGIBLE_PLAN',
+      value: null,
+      raw: 'N/A',
+      reason: eligibility.reason
+    };
+  }
+
+  if (isTitanioPlan(planName)) {
     const rule = getTitanioRule(device.name);
 
     if (!rule) {
       return {
         type: 'NOT_AVAILABLE',
         value: null,
-        raw: 'N/A'
+        raw: 'N/A',
+        reason: 'Este equipo no participa en la promoción Titanio.'
       };
     }
 
     return {
       type: rule.promo === 0 ? 'INCLUDED' : 'PRICE',
       value: rule.promo,
-      raw: rule.promo === 0 ? 'INCLUIDO' : String(rule.promo)
+      raw: rule.promo === 0 ? 'INCLUIDO' : String(rule.promo),
+      reason: ''
     };
   }
 
-  return device.promos?.[planName]?.[termMonths] || {
-    type: 'MISSING',
-    value: null,
-    raw: ''
-  };
+  const promotion = device.promos?.[planName]?.[termMonths];
+
+  if (!promotion) {
+    return {
+      type: 'MISSING',
+      value: null,
+      raw: '',
+      reason: 'No se encontró información comercial para esta combinación.'
+    };
+  }
+
+  return promotion;
 }
 
 export function calculatePortability(hasPortability, planName) {
   if (!hasPortability) return 0;
 
-  return String(planName).toLowerCase().includes('titanio')
-    ? 0.10
-    : 0.20;
+  return isTitanioPlan(planName) ? 0.10 : 0.20;
 }
 
 export function calculateInsurance(hasInsurance, insuranceTier) {
@@ -69,9 +140,7 @@ export function calculateInsurance(hasInsurance, insuranceTier) {
 }
 
 export function calculateTitanioExtra(deviceName, planName) {
-  const isTitanio = String(planName).toLowerCase().includes('titanio');
-
-  if (!isTitanio) return 0;
+  if (!isTitanioPlan(planName)) return 0;
 
   return getTitanioRule(deviceName)?.extra || 0;
 }
@@ -89,8 +158,8 @@ export function calculateTotal({
   hasControl = false,
   deviceName = ''
 }) {
-  const isTitanio = String(planName).toLowerCase().includes('titanio');
-  const term = isTitanio ? 30 : Number(termMonths) || 36;
+  const isTitanio = isTitanioPlan(planName);
+  const term = isTitanio ? TITANIO_TERM : Number(termMonths) || 36;
 
   const oldPrice = Math.max(0, Number(listPrice) || 0);
   const finalPrice = Math.max(0, Number(promoPrice) || 0);
