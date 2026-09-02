@@ -3,31 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARSA Cotizador Next v1.0</title>
 
-  <!-- Librerías externas -->
+  <title>ARSA Cotizador Next</title>
+
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <!-- Estilos de la aplicación -->
   <link rel="stylesheet" href="./crystal.css">
 </head>
 
 <body>
   <main class="crystal-app">
 
-    <!-- PANEL IZQUIERDO -->
     <section class="glass-panel">
-
       <div class="panel-title">
         <span>ARSA Cotizador Next</span>
 
         <label class="btn-crystal file-button">
           📁 Excel
           <input
-            type="file"
             id="excelFileInput"
+            type="file"
             accept=".xls,.xlsx,.xlsm"
             hidden
           >
@@ -35,47 +32,37 @@
       </div>
 
       <div id="catalogStatus" class="catalog-status">
-        Cargando catálogo...
+        Carga tu Excel vigente para cotizar.
       </div>
 
-      <!-- DATOS DEL CLIENTE -->
-      <div class="section-title">👤 Datos del cliente</div>
+      <div id="commercialAlert" class="commercial-alert" hidden></div>
+
+      <div class="section-title">Cliente</div>
 
       <div class="field-group">
-        <label class="field-label" for="clientNameInput">
-          Nombre completo
-        </label>
-
+        <label class="field-label" for="clientNameInput">Nombre completo</label>
         <input
-          type="text"
           id="clientNameInput"
           class="glass-input"
+          type="text"
           placeholder="Ej. Juan Pérez"
-          autocomplete="name"
         >
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="clientPhoneInput">
-          Teléfono
-        </label>
-
+        <label class="field-label" for="clientPhoneInput">Teléfono</label>
         <input
-          type="tel"
           id="clientPhoneInput"
           class="glass-input"
+          type="tel"
           placeholder="Ej. 55 1234 5678"
-          autocomplete="tel"
         >
       </div>
 
-      <!-- TIPO DE OPERACIÓN -->
-      <div class="section-title">📋 Tipo de operación</div>
+      <div class="section-title">Operación</div>
 
       <div class="field-group">
-        <label class="field-label" for="operationSelect">
-          Operación
-        </label>
+        <label class="field-label" for="operationSelect">Tipo de operación</label>
 
         <select id="operationSelect" class="glass-select">
           <option value="renovacion">Renovación</option>
@@ -86,13 +73,10 @@
         </select>
       </div>
 
-      <!-- EQUIPO Y PLAN -->
-      <div class="section-title">📱 Equipo y plan</div>
+      <div class="section-title">Equipo y plan</div>
 
       <div class="field-group">
-        <label class="field-label" for="brandSelect">
-          Marca
-        </label>
+        <label class="field-label" for="brandSelect">Marca</label>
 
         <select id="brandSelect" class="glass-select">
           <option value="TODAS">Todas las marcas</option>
@@ -100,33 +84,26 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="deviceSearch">
-          Buscar equipo
-        </label>
+        <label class="field-label" for="deviceSearch">Buscar equipo</label>
 
         <input
-          type="search"
           id="deviceSearch"
           class="glass-input"
-          placeholder="Ej. iPhone 17, Galaxy S25..."
-          autocomplete="off"
+          type="search"
+          placeholder="Ej. iPhone 17 256GB"
         >
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="deviceSelect">
-          Seleccionar modelo
-        </label>
+        <label class="field-label" for="deviceSelect">Modelo</label>
 
         <select id="deviceSelect" class="glass-select">
-          <option value="">Carga un Excel para consultar equipos</option>
+          <option value="">Carga el Excel para consultar equipos</option>
         </select>
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="planSelect">
-          Plan tarifario
-        </label>
+        <label class="field-label" for="planSelect">Plan</label>
 
         <select id="planSelect" class="glass-select">
           <option value="Azul 1">Azul 1 - $330</option>
@@ -142,9 +119,7 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="termSelect">
-          Plazo de contrato
-        </label>
+        <label class="field-label" for="termSelect">Plazo</label>
 
         <select id="termSelect" class="glass-select">
           <option value="24">24 meses</option>
@@ -155,63 +130,53 @@
 
       <div class="field-group">
         <label class="field-label" for="downPaymentInput">
-          Pago inicial / Enganche
+          Pago inicial hoy
         </label>
 
         <input
-          type="number"
           id="downPaymentInput"
           class="glass-input"
-          value="0"
+          type="number"
           min="0"
           step="0.01"
-          inputmode="decimal"
+          value="0"
         >
       </div>
 
-      <!-- OPCIONES -->
-      <div class="section-title">⚙️ Opciones</div>
+      <div class="section-title">Opciones</div>
 
       <div class="toggle-row">
-        <span class="field-label toggle-label">
-          Portabilidad especial
-        </span>
+        <span class="field-label toggle-label">Portabilidad especial</span>
 
         <label class="toggle-switch">
-          <input type="checkbox" id="portabilityToggle">
+          <input id="portabilityToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
 
       <div class="toggle-row">
-        <span class="field-label toggle-label">
-          Seguro AT&T
-        </span>
+        <span class="field-label toggle-label">Agregar seguro</span>
 
         <label class="toggle-switch">
-          <input type="checkbox" id="insuranceToggle">
+          <input id="insuranceToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
 
       <div class="toggle-row">
-        <span class="field-label toggle-label">
-          Control de saldo (+$50)
-        </span>
+        <span class="field-label toggle-label">Agregar control $50</span>
 
         <label class="toggle-switch">
-          <input type="checkbox" id="controlToggle">
+          <input id="controlToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
-
     </section>
 
-    <!-- PANEL DERECHO / TARJETA DE COTIZACIÓN -->
     <section>
       <article id="quoteCard" class="quote-card">
 
-        <header id="planBand" class="plan-header-band">
+        <header class="plan-header-band">
           <div>
             <div id="cardPlanTitle" class="plan-header-title">
               Plan Azul 1
@@ -229,7 +194,8 @@
 
         <div class="quote-body">
 
-          <!-- CLIENTE -->
+          <div id="cardCommercialAlert" class="card-commercial-alert" hidden></div>
+
           <section class="client-info-section">
             <div class="client-row">
               <span>Cliente</span>
@@ -243,52 +209,90 @@
 
             <div class="client-row">
               <span>Operación</span>
-              <strong id="cardOperation" class="operation-value">
-                Renovación
-              </strong>
+              <strong id="cardOperation">Renovación</strong>
             </div>
           </section>
 
-          <!-- DISPOSITIVO -->
           <section class="quote-device-info">
-            <span id="cardDeviceBrand" class="device-brand-badge">
-              ARSA
-            </span>
+            <span id="cardDeviceBrand" class="device-brand-badge">ARSA</span>
 
             <h1 id="cardDeviceName" class="device-title">
               Selecciona un equipo
             </h1>
 
             <p id="cardValidity" class="validity-text"></p>
+
+            <div id="promoStatus" class="promo-status">
+              Selecciona un equipo para consultar promoción.
+            </div>
           </section>
 
-          <!-- PRECIOS DEL EQUIPO -->
           <section class="quote-pricing-grid">
-            <div class="price-item">
+            <div>
               <div class="price-item-label">Precio lista</div>
               <div id="cardListPrice" class="price-item-value">$0.00</div>
             </div>
 
-            <div class="price-item">
+            <div>
               <div class="price-item-label">Precio promocional</div>
               <div id="cardPromoPrice" class="price-item-value discount">$0.00</div>
             </div>
 
-            <div class="price-item">
-              <div class="price-item-label">Pago inicial / Enganche</div>
+            <div>
+              <div class="price-item-label">Pago inicial</div>
               <div id="cardDownPayment" class="price-item-value">$0.00</div>
             </div>
 
-            <div class="price-item">
-              <div class="price-item-label">Saldo a financiar</div>
+            <div>
+              <div class="price-item-label">Saldo financiado</div>
               <div id="cardBalance" class="price-item-value">$0.00</div>
             </div>
           </section>
 
-          <!-- TOTAL -->
+          <section class="benefits-section">
+            <div class="section-title">Beneficios estimados</div>
+
+            <div class="benefits-grid">
+              <div class="benefit-card benefit-green">
+                <div class="benefit-label">Ahorro equipo</div>
+                <div id="cardTotalSavings" class="benefit-value">$0.00</div>
+              </div>
+
+              <div class="benefit-card benefit-blue">
+                <div class="benefit-label">Descuento</div>
+                <div id="cardDiscountPercent" class="benefit-value">0%</div>
+              </div>
+            </div>
+          </section>
+
+          <section id="quoteBreakdown" class="quote-breakdown">
+            <div class="breakdown-title">Desglose mensual</div>
+
+            <div class="breakdown-row">
+              <span id="breakdownDeviceLabel">Equipo a 36 meses</span>
+              <strong id="breakdownDevice">$0.00</strong>
+            </div>
+
+            <div class="breakdown-row">
+              <span>Renta aplicada del plan</span>
+              <strong id="breakdownPlan">$0.00</strong>
+            </div>
+
+            <div id="breakdownInsuranceRow" class="breakdown-row" hidden>
+              <span>Seguro</span>
+              <strong id="breakdownInsurance">$0.00</strong>
+            </div>
+
+            <div id="breakdownControlRow" class="breakdown-row" hidden>
+              <span>Control</span>
+              <strong id="breakdownControl">$0.00</strong>
+            </div>
+          </section>
+
           <section id="totalBand" class="total-hero-band">
             <div>
               <div class="total-label">Total mensual estimado</div>
+
               <div id="cardSavingsLabel" class="total-savings">
                 Ahorro en equipo: $0.00
               </div>
@@ -299,66 +303,6 @@
             </div>
           </section>
 
-          <!-- BENEFICIOS -->
-          <section class="benefits-section">
-            <div class="section-title benefits-title">
-              ✨ Beneficios estimados
-            </div>
-
-            <div class="benefits-grid">
-              <div class="benefit-card benefit-green">
-                <div class="benefit-label">Ahorro total</div>
-                <div id="cardTotalSavings" class="benefit-value">$0.00</div>
-              </div>
-
-              <div class="benefit-card benefit-blue">
-                <div class="benefit-label">Descuento equipo</div>
-                <div id="cardDiscountPercent" class="benefit-value">0%</div>
-              </div>
-            </div>
-          </section>
-
-          <!-- DESGLOSE OPCIONAL -->
-          <section id="quoteBreakdown" class="quote-breakdown" hidden>
-            <div class="breakdown-title">Desglose mensual</div>
-
-            <div class="breakdown-row">
-              <span>Renta del plan</span>
-              <strong id="breakdownPlan">$0.00</strong>
-            </div>
-
-            <div class="breakdown-row">
-              <span>Equipo financiado</span>
-              <strong id="breakdownDevice">$0.00</strong>
-            </div>
-
-            <div class="breakdown-row">
-              <span>Seguro</span>
-              <strong id="breakdownInsurance">$0.00</strong>
-            </div>
-
-            <div class="breakdown-row">
-              <span>Control de saldo</span>
-              <strong id="breakdownControl">$0.00</strong>
-            </div>
-
-            <div class="breakdown-row breakdown-total">
-              <span>Total mensual</span>
-              <strong id="breakdownTotal">$0.00</strong>
-            </div>
-          </section>
-
-          <!-- MOSTRAR / OCULTAR DESGLOSE -->
-          <button
-            id="toggleBreakdown"
-            class="btn-crystal breakdown-toggle"
-            type="button"
-          >
-            <span id="toggleBreakdownIcon">＋</span>
-            <span id="toggleBreakdownText">Agregar desglose</span>
-          </button>
-
-          <!-- ESTOS BOTONES NO APARECEN EN PNG NI PDF -->
           <div class="btn-row export-actions" data-export-hide>
             <button id="btnExportPNG" class="btn-crystal btn-primary" type="button">
               📸 PNG
@@ -372,7 +316,6 @@
         </div>
       </article>
     </section>
-
   </main>
 
   <script type="module">
