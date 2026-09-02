@@ -1,29 +1,20 @@
-/* =========================================================
-   ARSA COTIZADOR NEXT
-   Crystal UI / Liquid Glass / Mobile First
-   ========================================================= */
-
 :root {
-  --bg-dark: #070b14;
-  --bg-deep: #0b1220;
+  --bg-dark: #09101c;
   --bg-gradient:
-    radial-gradient(circle at 12% 10%, rgba(35, 67, 170, 0.60), transparent 34%),
-    radial-gradient(circle at 88% 12%, rgba(0, 177, 236, 0.22), transparent 30%),
-    linear-gradient(135deg, #09101d 0%, #050910 100%);
+    radial-gradient(circle at 10% 10%, #19345d 0%, transparent 35%),
+    radial-gradient(circle at 90% 0%, #044775 0%, transparent 30%),
+    linear-gradient(135deg, #050914, #0e1727);
 
-  --glass-bg: rgba(15, 23, 42, 0.64);
-  --glass-bg-soft: rgba(255, 255, 255, 0.035);
+  --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.13);
-  --glass-border-soft: rgba(255, 255, 255, 0.08);
 
   --text-main: #f8fafc;
   --text-muted: #9ca9bd;
-  --text-faint: #6d7b91;
 
   --accent-cyan: #36c5ff;
-  --accent-emerald: #16c79a;
-  --accent-gold: #e9bf42;
-  --accent-rose: #fb7185;
+  --accent-emerald: #19c899;
+  --accent-warning: #ffc24f;
+  --accent-danger: #ff6b7d;
 
   --p1: #18b9e9;
   --p2: #078dc7;
@@ -32,116 +23,80 @@
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 28px;
-
-  --shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.45);
-  --font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  min-height: 100%;
-  background: var(--bg-dark);
-}
-
 body {
-  min-width: 320px;
   min-height: 100vh;
   margin: 0;
   color: var(--text-main);
-  font-family: var(--font-family);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   background: var(--bg-gradient);
   background-attachment: fixed;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-/* =========================================================
-   LAYOUT
-   ========================================================= */
 
 .crystal-app {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  width: min(1400px, 100%);
+  grid-template-columns: minmax(350px, 470px) minmax(0, 1fr);
+  gap: 28px;
+  max-width: 1450px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 30px;
 }
 
-@media (min-width: 1024px) {
-  .crystal-app {
-    grid-template-columns: minmax(360px, 480px) minmax(0, 1fr);
-    align-items: start;
-    gap: 30px;
-    padding: 40px 28px;
-  }
-}
-
-/* =========================================================
-   PANEL IZQUIERDO
-   ========================================================= */
-
-.glass-panel {
-  padding: 22px;
+.glass-panel,
+.quote-card {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(145deg, rgba(34, 65, 169, 0.76), rgba(12, 28, 77, 0.88));
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: rgba(10, 20, 40, 0.76);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(20px);
+}
+
+.glass-panel {
+  padding: 24px;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 18px;
   color: var(--accent-cyan);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
 .catalog-status {
   margin-bottom: 18px;
   color: var(--accent-cyan);
-  font-size: 0.83rem;
-  line-height: 1.45;
+  font-size: 0.85rem;
 }
 
 .section-title {
-  margin: 25px 0 16px;
-  padding-bottom: 10px;
+  margin: 25px 0 15px;
+  padding-bottom: 9px;
   border-bottom: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 900;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .field-group {
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
 
 .field-label {
@@ -149,63 +104,43 @@ select {
   margin-bottom: 7px;
   color: var(--text-muted);
   font-size: 0.77rem;
-  font-weight: 800;
-  letter-spacing: 0.045em;
+  font-weight: 850;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .glass-input,
 .glass-select {
   width: 100%;
-  min-height: 56px;
-  padding: 13px 16px;
+  min-height: 53px;
+  padding: 12px 15px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  outline: none;
-  color: var(--text-main);
-  background: rgba(8, 18, 47, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.glass-select {
-  cursor: pointer;
+  outline: 0;
+  color: white;
+  background: rgba(4, 13, 35, 0.76);
+  font-size: 0.96rem;
 }
 
 .glass-select option {
   color: #111827;
-  background: #ffffff;
-}
-
-.glass-input::placeholder {
-  color: #71809a;
 }
 
 .glass-input:focus,
 .glass-select:focus {
   border-color: var(--accent-cyan);
-  background: rgba(9, 25, 61, 0.95);
   box-shadow: 0 0 0 3px rgba(54, 197, 255, 0.16);
 }
-
-/* =========================================================
-   TOGGLES
-   ========================================================= */
 
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 58px;
-  margin-bottom: 12px;
-  padding: 12px 14px;
+  min-height: 56px;
+  margin-bottom: 10px;
+  padding: 11px 14px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.025);
 }
 
 .toggle-label {
@@ -214,10 +149,8 @@ select {
 
 .toggle-switch {
   position: relative;
-  display: inline-block;
-  flex: 0 0 auto;
   width: 48px;
-  height: 27px;
+  height: 26px;
 }
 
 .toggle-switch input {
@@ -229,23 +162,21 @@ select {
 .toggle-slider {
   position: absolute;
   inset: 0;
-  cursor: pointer;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.20);
-  transition: 0.25s ease;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .toggle-slider::before {
   position: absolute;
   bottom: 4px;
   left: 4px;
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   content: "";
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  transition: 0.25s ease;
+  background: white;
+  transition: 0.2s;
 }
 
 .toggle-switch input:checked + .toggle-slider {
@@ -253,471 +184,297 @@ select {
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(21px);
-}
-
-/* =========================================================
-   BOTONES
-   ========================================================= */
-
-.btn-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  transform: translateX(22px);
 }
 
 .btn-crystal {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  min-height: 58px;
-  padding: 14px 16px;
+  min-height: 54px;
+  padding: 12px 16px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  color: #ffffff;
+  color: white;
   background: rgba(255, 255, 255, 0.08);
   font-weight: 850;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.btn-crystal:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.btn-crystal:active {
-  transform: translateY(0);
-}
-
-.btn-primary {
-  border-color: transparent;
-  background: var(--p-gradient);
 }
 
 .file-button {
   min-height: auto;
-  padding: 10px 14px;
-  font-size: 0.82rem;
+  padding: 9px 13px;
+  font-size: 0.8rem;
 }
 
-/* =========================================================
-   TARJETA DE COTIZACIÓN
-   ========================================================= */
+.btn-primary {
+  border: 0;
+  background: var(--p-gradient);
+}
 
 .quote-card {
   overflow: hidden;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(180deg, rgba(17, 28, 51, 0.82), rgba(7, 13, 25, 0.96));
-  box-shadow: var(--shadow-lg);
 }
 
 .plan-header-band {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 18px;
-  min-height: 124px;
-  padding: 26px 30px;
+  padding: 27px 30px;
   background: var(--p-gradient);
 }
 
-.plan-header-title {
-  color: #ffffff;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+.plan-header-title,
+.plan-header-price {
+  color: white;
+  font-size: 1.75rem;
   font-weight: 950;
-  letter-spacing: -0.04em;
 }
 
 .plan-header-sub {
   margin-top: 4px;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.94rem;
-  font-weight: 750;
-}
-
-.plan-header-price {
-  color: #ffffff;
-  font-size: clamp(1.5rem, 3.1vw, 2rem);
-  font-weight: 950;
-  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 700;
 }
 
 .quote-body {
-  padding: 30px;
+  padding: 28px;
 }
 
-/* =========================================================
-   INFORMACIÓN DEL CLIENTE
-   ========================================================= */
-
-.client-info-section {
-  display: grid;
-  gap: 13px;
-  margin-bottom: 28px;
-  padding: 22px;
+.client-info-section,
+.quote-pricing-grid,
+.quote-breakdown {
+  margin-bottom: 23px;
+  padding: 20px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.025);
 }
 
-.client-row {
+.client-row,
+.breakdown-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
+  padding: 8px 0;
   color: var(--text-muted);
-  font-size: 0.84rem;
-  text-transform: uppercase;
 }
 
-.client-row strong {
-  max-width: 65%;
-  overflow: hidden;
-  color: var(--text-main);
-  font-size: 0.95rem;
-  font-weight: 850;
-  text-align: right;
-  text-overflow: ellipsis;
-  text-transform: none;
-  white-space: nowrap;
+.client-row strong,
+.breakdown-row strong {
+  color: white;
 }
-
-.client-row .operation-value {
-  color: var(--accent-cyan);
-}
-
-/* =========================================================
-   EQUIPO
-   ========================================================= */
 
 .quote-device-info {
-  margin-bottom: 28px;
+  margin-bottom: 23px;
 }
 
 .device-brand-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 5px 11px;
+  display: inline-block;
+  padding: 6px 11px;
   border-radius: 999px;
   color: var(--accent-cyan);
   background: rgba(255, 255, 255, 0.11);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 900;
-  text-transform: uppercase;
 }
 
 .device-title {
-  margin: 16px 0 7px;
-  color: #ffffff;
-  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  margin: 14px 0 6px;
+  color: white;
+  font-size: 2rem;
   font-weight: 950;
-  letter-spacing: -0.045em;
-  line-height: 1.12;
+  letter-spacing: -0.04em;
 }
 
 .validity-text {
-  margin: 0;
   color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
 }
 
-/* =========================================================
-   PRECIOS
-   ========================================================= */
+.promo-status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 750;
+}
 
-.quote-pricing-grid {
+.promo-ok {
+  color: #c2f9e7;
+  background: rgba(25, 200, 153, 0.15);
+}
+
+.promo-included {
+  color: #d6f8bd;
+  background: rgba(103, 195, 68, 0.18);
+}
+
+.promo-danger {
+  color: #ffd2d8;
+  background: rgba(255, 107, 125, 0.18);
+}
+
+.quote-pricing-grid,
+.benefits-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  margin-bottom: 28px;
-  padding: 24px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.022);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
 }
 
-.price-item-label {
-  margin-bottom: 8px;
+.price-item-label,
+.benefit-label {
+  margin-bottom: 7px;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
-.price-item-value {
-  color: #ffffff;
-  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+.price-item-value,
+.benefit-value {
+  color: white;
+  font-size: 1.35rem;
   font-weight: 950;
 }
 
-.price-item-value.discount {
+.discount {
   color: var(--accent-emerald);
 }
 
-/* =========================================================
-   TOTAL
-   ========================================================= */
+.included-price {
+  color: #a8ee6b !important;
+  font-size: 1.15rem;
+}
+
+.benefit-card {
+  padding: 16px;
+  border-radius: 13px;
+}
+
+.benefit-green {
+  border: 1px solid rgba(25, 200, 153, 0.30);
+  background: rgba(25, 200, 153, 0.10);
+}
+
+.benefit-blue {
+  border: 1px solid rgba(54, 197, 255, 0.30);
+  background: rgba(54, 197, 255, 0.10);
+}
+
+.breakdown-title {
+  margin-bottom: 10px;
+  color: var(--accent-cyan);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.breakdown-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
 
 .total-hero-band {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 28px;
-  padding: 25px 30px;
+  gap: 18px;
+  padding: 23px 27px;
   border-radius: var(--radius-md);
   background: var(--p-gradient);
 }
 
 .total-label {
-  color: rgba(255, 255, 255, 0.90);
-  font-size: 0.83rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 850;
   text-transform: uppercase;
 }
 
 .total-savings {
   margin-top: 6px;
-  color: #ffffff;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.86rem;
 }
 
 .total-hero-val {
-  color: #ffffff;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: 2.7rem;
   font-weight: 950;
-  letter-spacing: -0.05em;
   white-space: nowrap;
-}
-
-/* =========================================================
-   BENEFICIOS
-   ========================================================= */
-
-.benefits-section {
-  margin-bottom: 22px;
-}
-
-.benefits-title {
-  margin-top: 0;
-}
-
-.benefits-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.benefit-card {
-  min-height: 92px;
-  padding: 17px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-}
-
-.benefit-green {
-  border-color: rgba(22, 199, 154, 0.30);
-  background: rgba(22, 199, 154, 0.10);
-}
-
-.benefit-blue {
-  border-color: rgba(54, 197, 255, 0.30);
-  background: rgba(54, 197, 255, 0.10);
-}
-
-.benefit-label {
-  margin-bottom: 8px;
-  color: var(--text-muted);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.benefit-value {
-  color: #ffffff;
-  font-size: 1.38rem;
-  font-weight: 950;
-}
-
-.benefit-green .benefit-value {
-  color: var(--accent-emerald);
-}
-
-.benefit-blue .benefit-value {
-  color: var(--accent-cyan);
-}
-
-/* =========================================================
-   DESGLOSE
-   ========================================================= */
-
-.quote-breakdown {
-  margin: 0 0 16px;
-  padding: 20px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.035);
-}
-
-.quote-breakdown[hidden] {
-  display: none;
-}
-
-.breakdown-title {
-  margin-bottom: 12px;
-  color: var(--accent-cyan);
-  font-size: 0.82rem;
-  font-weight: 950;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.breakdown-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--glass-border-soft);
-  color: var(--text-muted);
-  font-size: 0.92rem;
-}
-
-.breakdown-row strong {
-  color: var(--text-main);
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.breakdown-total {
-  margin-top: 3px;
-  padding-top: 14px;
-  border-bottom: 0;
-  color: var(--text-main);
-  font-size: 1rem;
-  font-weight: 950;
-}
-
-.breakdown-total strong {
-  color: var(--accent-emerald);
-}
-
-.breakdown-toggle {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.breakdown-toggle span:first-child {
-  font-size: 1.3rem;
-  line-height: 1;
 }
 
 .export-actions {
-  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 13px;
+  margin-top: 22px;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+.commercial-alert,
+.card-commercial-alert {
+  margin-bottom: 16px;
+}
 
-@media (max-width: 700px) {
+.alert-item {
+  margin-bottom: 8px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.alert-danger {
+  color: #ffd6dc;
+  border: 1px solid rgba(255, 107, 125, 0.40);
+  background: rgba(255, 107, 125, 0.15);
+}
+
+.alert-warning {
+  color: #ffe6ab;
+  border: 1px solid rgba(255, 194, 79, 0.40);
+  background: rgba(255, 194, 79, 0.14);
+}
+
+.alert-info {
+  color: #cceeff;
+  border: 1px solid rgba(54, 197, 255, 0.30);
+  background: rgba(54, 197, 255, 0.10);
+}
+
+.button-disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
   .crystal-app {
-    gap: 18px;
-    padding: 12px;
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 620px) {
+  .quote-pricing-grid,
+  .benefits-grid,
+  .export-actions {
+    grid-template-columns: 1fr;
   }
 
-  .glass-panel {
-    padding: 18px;
-    border-radius: 22px;
-  }
-
-  .quote-card {
-    border-radius: 22px;
-  }
-
-  .plan-header-band {
-    min-height: 105px;
-    padding: 20px;
+  .plan-header-band,
+  .total-hero-band {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .quote-body {
     padding: 20px;
   }
 
-  .client-info-section {
-    padding: 16px;
-  }
-
-  .quote-pricing-grid {
-    gap: 16px;
-    padding: 18px;
-  }
-
-  .total-hero-band {
-    padding: 20px;
-  }
-
-  .benefits-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .btn-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 430px) {
-  .panel-title {
-    align-items: flex-start;
-    font-size: 0.9rem;
-  }
-
-  .file-button {
-    padding: 9px 10px;
-    font-size: 0.73rem;
-  }
-
-  .plan-header-band {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
+  .plan-header-title,
   .plan-header-price {
-    font-size: 1.65rem;
-  }
-
-  .quote-pricing-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .total-hero-band {
-    flex-direction: column;
-    align-items: flex-start;
+    font-size: 1.45rem;
   }
 
   .total-hero-val {
-    font-size: 2.3rem;
-  }
-
-  .client-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .client-row strong {
-    max-width: 100%;
-    text-align: left;
+    font-size: 2.2rem;
   }
 }
