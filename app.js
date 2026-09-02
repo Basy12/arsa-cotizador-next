@@ -5,8 +5,20 @@
 
 import { CatalogEngine } from './catalogEngine.js';
 import { loadWorkbook } from './excelImporter.js';
-import { calculatePromotion, calculateTotal, formatMXN } from './quoteEngine.js';
-import { saveCatalogData, loadCatalogData, saveFormState, loadFormState } from './storageService.js';
+
+import {
+  calculatePromotion,
+  calculateTotal,
+  formatMXN
+} from './quoteEngine.js';
+
+import {
+  saveCatalogData,
+  loadCatalogData,
+  saveFormState,
+  loadFormState
+} from './storageService.js';
+
 import { resolvePlanTheme } from './planThemes.js';
 
 // Instancia global del motor de catálogo
