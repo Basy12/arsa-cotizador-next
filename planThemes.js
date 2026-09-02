@@ -1,89 +1,113 @@
 /**
- * ARSA Cotizador Next - Theme Engine
- * Definicion de colores, rentas base y tokens cromaticos por Plan
+ * ARSA Cotizador Next - Plan Themes
+ * Temas Crystal Glass por plan.
  */
 
 export const PLAN_THEMES = {
   'Azul 1': {
     name: 'Azul 1',
     price: 330,
-    c1: '#19a8d8',
-    c2: '#0879b9',
-    accent: '#00d2ff',
-    badge: 'rgba(25, 168, 216, 0.15)'
+    c1: '#26c6f5',
+    c2: '#1271db',
+    glow: 'rgba(38, 198, 245, 0.40)',
+    glass: 'rgba(38, 198, 245, 0.16)',
+    border: 'rgba(144, 230, 255, 0.40)',
+    text: '#ecfbff'
   },
+
   'Azul 2': {
     name: 'Azul 2',
     price: 435,
-    c1: '#35a9d7',
-    c2: '#1976ad',
-    accent: '#38c1ff',
-    badge: 'rgba(53, 169, 215, 0.15)'
+    c1: '#4fd4ff',
+    c2: '#2886e7',
+    glow: 'rgba(79, 212, 255, 0.40)',
+    glass: 'rgba(79, 212, 255, 0.16)',
+    border: 'rgba(170, 235, 255, 0.42)',
+    text: '#effcff'
   },
+
   'Azul 3': {
     name: 'Azul 3',
     price: 550,
-    c1: '#16a8a7',
-    c2: '#087b82',
-    accent: '#00f0d2',
-    badge: 'rgba(22, 168, 167, 0.15)'
+    c1: '#43ded4',
+    c2: '#0a8f9f',
+    glow: 'rgba(67, 222, 212, 0.38)',
+    glass: 'rgba(67, 222, 212, 0.16)',
+    border: 'rgba(167, 255, 247, 0.40)',
+    text: '#effffc'
   },
-  'Plata': {
+
+  Plata: {
     name: 'Plata',
     price: 650,
-    c1: '#9ca7ae',
-    c2: '#5e6b73',
-    accent: '#e2e8f0',
-    badge: 'rgba(156, 167, 174, 0.2)'
+    c1: '#e8f0fa',
+    c2: '#71849d',
+    glow: 'rgba(217, 233, 255, 0.36)',
+    glass: 'rgba(219, 235, 255, 0.17)',
+    border: 'rgba(255, 255, 255, 0.50)',
+    text: '#ffffff'
   },
-  'Oro': {
+
+  Oro: {
     name: 'Oro',
     price: 725,
-    c1: '#d4af52',
-    c2: '#a47716',
-    accent: '#ffd700',
-    badge: 'rgba(212, 175, 82, 0.2)'
+    c1: '#f7d76c',
+    c2: '#b98612',
+    glow: 'rgba(247, 215, 108, 0.38)',
+    glass: 'rgba(247, 215, 108, 0.17)',
+    border: 'rgba(255, 235, 168, 0.46)',
+    text: '#fffdf4'
   },
-  'Black': {
+
+  Black: {
     name: 'Black',
     price: 825,
-    c1: '#29252d',
-    c2: '#050507',
-    accent: '#a855f7',
-    badge: 'rgba(41, 37, 45, 0.4)'
+    c1: '#4c4c58',
+    c2: '#07070a',
+    glow: 'rgba(166, 123, 255, 0.26)',
+    glass: 'rgba(255, 255, 255, 0.08)',
+    border: 'rgba(255, 255, 255, 0.26)',
+    text: '#ffffff'
   },
-  'Platino': {
+
+  Platino: {
     name: 'Platino',
     price: 1035,
-    c1: '#d5d5d8',
-    c2: '#9699a0',
-    accent: '#f8fafc',
-    badge: 'rgba(213, 213, 216, 0.2)'
+    c1: '#ffffff',
+    c2: '#8797ab',
+    glow: 'rgba(238, 247, 255, 0.42)',
+    glass: 'rgba(244, 251, 255, 0.18)',
+    border: 'rgba(255, 255, 255, 0.58)',
+    text: '#ffffff'
   },
-  'Diamante': {
+
+  Diamante: {
     name: 'Diamante',
     price: 1300,
-    c1: '#20a7a8',
-    c2: '#087f82',
-    accent: '#38bdf8',
-    badge: 'rgba(32, 167, 168, 0.2)'
+    c1: '#68f1e3',
+    c2: '#1498b7',
+    glow: 'rgba(104, 241, 227, 0.42)',
+    glass: 'rgba(104, 241, 227, 0.16)',
+    border: 'rgba(188, 255, 248, 0.48)',
+    text: '#f0ffff'
   },
-  'Titanio': {
+
+  Titanio: {
     name: 'Titanio',
     price: 1599,
-    c1: '#8a8c8f',
-    c2: '#53565a',
-    accent: '#f59e0b',
-    badge: 'rgba(138, 140, 143, 0.2)'
+    c1: '#d1d4d7',
+    c2: '#515a62',
+    glow: 'rgba(211, 217, 223, 0.36)',
+    glass: 'rgba(218, 224, 230, 0.16)',
+    border: 'rgba(244, 247, 250, 0.42)',
+    text: '#ffffff'
   }
 };
 
-export function resolvePlanTheme(rawPlanName) {
-  const str = String(rawPlanName || '').toLowerCase();
-  for (const key of Object.keys(PLAN_THEMES)) {
-    if (str.includes(key.toLowerCase())) {
-      return PLAN_THEMES[key];
-    }
-  }
-  return PLAN_THEMES['Azul 1'];
+export function resolvePlanTheme(planName = '') {
+  const normalized = String(planName).trim().toLowerCase();
+
+  return Object.values(PLAN_THEMES).find(theme =>
+    normalized.includes(theme.name.toLowerCase())
+  ) || PLAN_THEMES['Azul 1'];
 }
