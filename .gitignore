@@ -1,0 +1,26 @@
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores de codigo
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Dependencias
+node_modules/
+
+# Temporales
+tmp/
+temp/
+*.tmp
+
+# Credenciales
+.env
+.env.local

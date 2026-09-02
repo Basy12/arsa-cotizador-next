@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARSA Cotizador Next v1.0</title>
+  
+  <!-- Dependencias Externas CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <!-- Estilos Crystal UI -->
+  <link rel="stylesheet" href="styles/crystal.css">
+</head>
+<body>
+
+  <main class="crystal-app">
+    <!-- PANEL IZQUIERDO: CONFIGURACION Y CONTROLES -->
+    <section class="glass-panel">
+      <div class="panel-title">
+        <span>ARSA Cotizador Next</span>
+        <label class="btn-crystal" style="padding: 6px 12px; font-size: 0.75rem; width: auto; flex: none;">
+          📁 Excel
+          <input type="file" id="excelFileInput" accept=".xls,.xlsx,.xlsm" style="display: none;">
+        </label>
+      </div>
+
+      <div id="catalogStatus" style="font-size: 0.8rem; color: var(--accent-cyan); margin-bottom: 16px;">
+        Cargando catálogo...
+      </div>
+
+      <!-- Cliente -->
+      <div class="section-title">👤 Datos del Cliente</div>
+      
+      <div class="field-group">
+        <label class="field-label" for="clientNameInput">Nombre Completo</label>
+        <input type="text" id="clientNameInput" class="glass-input" placeholder="Ej. Juan Pérez">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="clientPhoneInput">Teléfono</label>
+        <input type="tel" id="clientPhoneInput" class="glass-input" placeholder="Ej. 55 1234 5678">
+      </div>
+
+      <!-- Operacion -->
+      <div class="section-title">📋 Tipo de Operacion</div>
+      
+      <div class="field-group">
+        <label class="field-label" for="operationSelect">Operacion</label>
+        <select id="operationSelect" class="glass-select">
+          <option value="renovacion">Renovacion</option>
+          <option value="renovacion_anticipada">Renovacion Anticipada</option>
+          <option value="linea_nueva">Linea Nueva</option>
+          <option value="linea_adicional">Linea Adicional</option>
+          <option value="portabilidad">Portabilidad</option>
+        </select>
+      </div>
+
+      <!-- Catalogo -->
+      <div class="section-title">📱 Equipo y Plan</div>
+
+      <div class="field-group">
+        <label class="field-label" for="brandSelect">Marca</label>
+        <select id="brandSelect" class="glass-select"></select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="deviceSearch">Buscar Equipo</label>
+        <input type="text" id="deviceSearch" class="glass-input" placeholder="Ej. iPhone 17, Galaxy S25...">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="deviceSelect">Seleccionar Modelo</label>
+        <select id="deviceSelect" class="glass-select"></select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="planSelect">Plan Tarifario</label>
+        <select id="planSelect" class="glass-select">
+          <option value="Azul 1">Azul 1 - $330</option>
+          <option value="Azul 2">Azul 2 - $435</option>
+          <option value="Azul 3">Azul 3 - $550</option>
+          <option value="Plata">Plata - $650</option>
+          <option value="Oro">Oro - $725</option>
+          <option value="Black">Black - $825</option>
+          <option value="Platino">Platino - $1,035</option>
+          <option value="Diamante">Diamante - $1,300</option>
+          <option value="Titanio">Titanio - $1,599</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="termSelect">Plazo de Contrato</label>
+        <select id="termSelect" class="glass-select">
+          <option value="24">24 meses</option>
+          <option value="30">30 meses</option>
+          <option value="36" selected>36 meses</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="downPaymentInput">Pago Inicial / Enganche ($)</label>
+        <input type="number" id="downPaymentInput" class="glass-input" value="0" min="0">
+      </div>
+
+      <!-- Opciones Adicionales -->
+      <div class="section-title">⚙️ Opciones</div>
+
+      <div class="toggle-row">
+        <span class="field-label" style="margin: 0;">Portabilidad Especial</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="portabilityToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="field-label" style="margin: 0;">Seguro AT&T</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="insuranceToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="field-label" style="margin: 0;">Control de Saldo (+$50)</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="controlToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- PANEL DERECHO: VISOR DE COTIZACION Y ACCIONES -->
+    <section>
+      <div id="quoteCard" class="quote-card">
+        <div id="planBand" class="plan-header-band">
+          <div>
+            <div id="cardPlanTitle" class="plan-header-title">Plan Azul 1</div>
+            <div id="cardPlanTerm" class="plan-header-sub">Plazo a 36 meses</div>
+          </div>
+          <div id="cardPlanPrice" class="plan-header-title">$330.00</div>
+        </div>
+
+        <div class="quote-body">
+          <!-- Informacion del Cliente -->
+          <div class="client-info-section" style="margin-bottom: 20px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Cliente</span>
+              <span id="cardClientName" style="font-size: 0.95rem; font-weight: 600;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Telefono</span>
+              <span id="cardClientPhone" style="font-size: 0.95rem; font-weight: 600;">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Operacion</span>
+              <span id="cardOperation" style="font-size: 0.95rem; font-weight: 600; color: var(--accent-cyan);">Renovacion</span>
+            </div>
+          </div>
+
+          <!-- Informacion del Equipo -->
+          <div class="quote-device-info">
+            <span id="cardDeviceBrand" class="device-brand-badge">APPLE</span>
+            <h2 id="cardDeviceName" class="device-title">iPhone 17 Pro Max 256GB</h2>
+            <p id="cardValidity" style="font-size: 0.8rem; color: var(--text-muted);"></p>
+          </div>
+
+          <!-- Grid de Precios -->
+          <div class="quote-pricing-grid">
+            <div>
+              <div class="price-item-label">Precio Lista</div>
+              <div id="cardListPrice" class="price-item-value">$0.00</div>
+            </div>
+            <div>
+              <div class="price-item-label">Precio Promocional</div>
+              <div id="cardPromoPrice" class="price-item-value discount">$0.00</div>
+            </div>
+            <div>
+              <div class="price-item-label">Pago Inicial / Enganche</div>
+              <div id="cardDownPayment" class="price-item-value">$0.00</div>
+            </div>
+            <div>
+              <div class="price-item-label">Saldo a Financiar</div>
+              <div id="cardBalance" class="price-item-value">$0.00</div>
+            </div>
+          </div>
+
+          <!-- Total Hero -->
+          <div id="totalBand" class="total-hero-band">
+            <div>
+              <div style="font-size: 0.85rem; text-transform: uppercase; color: rgba(255,255,255,0.8);">Total Mensual Estimado</div>
+              <div id="cardSavingsLabel" style="font-size: 0.75rem; color: #fff;">Ahorras: $0.00</div>
+            </div>
+            <div id="cardTotalMonthly" class="total-hero-val">$0.00</div>
+          </div>
+
+          <!-- Beneficios y Comparativa -->
+          <div class="benefits-section" style="margin-bottom: 24px;">
+            <div class="section-title" style="margin-bottom: 12px;">✨ Beneficios Estimados</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px;">
+                <div style="font-size: 0.7rem; color: var(--accent-emerald); text-transform: uppercase; margin-bottom: 4px;">Ahorro Total</div>
+                <div id="cardTotalSavings" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-emerald);">$0.00</div>
+              </div>
+              <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px; border-radius: 8px;">
+                <div style="font-size: 0.7rem; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 4px;">Descuento Equipo</div>
+                <div id="cardDiscountPercent" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Accion -->
+          <div class="btn-row">
+            <button id="btnExportPNG" class="btn-crystal btn-primary">📸 PNG</button>
+            <button id="btnExportPDF" class="btn-crystal">📄 PDF</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Controlador Modular Principal -->
+  <script type="module">
+    import { init } from './src/app.js';
+    
+    // Inicializar aplicacion cuando el DOM este listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
