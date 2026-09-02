@@ -1,27 +1,43 @@
 /**
  * ARSA Cotizador Next - CatalogEngine
- * Búsqueda, filtrado y selección de equipos.
- *
- * La búsqueda normaliza acentos, mayúsculas, signos y espacios.
- * Ejemplos equivalentes:
- * - "iphone 17 pro"
- * - "iPhone-17 Pro"
- * - "IPHONE 17 PRO"
- * - "iphone17pro"
+ * Búsqueda estricta por nombre, marca, modelo e identificador.
  */
 
-function normalizeSearchText(value = '') {
+function normalizeText(value = '') {
   return String(value)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
 }
 
-function compactSearchText(value = '') {
-  return normalizeSearchText(value).replace(/\s+/g, '');
+function getSearchTerms(value = '') {
+  return normalizeText(value)
+    .replace(/[-_/.,]+/g, ' ')
+    .split(' ')
+    .filter(Boolean);
+}
+
+function containsAllTerms(text, terms) {
+  const normalizedText = normalizeText(text);
+  return terms.every(term => normalizedText.includes(term));
+}
+
+function containsModelNumber(text, number) {
+  const normalizedText = normalizeText(text);
+
+  const expressions = [
+    new RegExp(`\\b${number}\\b`),
+    new RegExp(`iphone\\s*${number}\\b`),
+    new RegExp(`galaxy\\s*${number}\\b`),
+    new RegExp(`samsung\\s*${number}\\b`),
+    new RegExp(`redmi\\s*${number}\\b`),
+    new RegExp(`note\\s*${number}\\b`),
+    new RegExp(`edge\\s*${number}\\b`)
+  ];
+
+  return expressions.some(expression => expression.test(normalizedText));
 }
 
 export class CatalogEngine {
@@ -49,73 +65,51 @@ export class CatalogEngine {
   }
 
   filterBrand(brandName = '') {
-    const brand = normalizeSearchText(brandName);
+    const brand = normalizeText(brandName);
 
     if (!brand || brand === 'todas') {
       return [...this.catalog];
     }
 
     return this.catalog.filter(device =>
-      normalizeSearchText(device?.brand) === brand
+      normalizeText(device?.brand) === brand
     );
   }
 
-  /**
-   * Búsqueda inteligente con prioridad:
-   * 1. Coincidencia exacta de nombre.
-   * 2. Coincidencia exacta ignorando espacios, guiones y signos.
-   * 3. El nombre empieza con la búsqueda.
-   * 4. Todos los términos aparecen en el nombre, sin importar orden o separadores.
-   * 5. Coincidencia parcial como último recurso.
-   */
   searchDevice(brand = '', query = '') {
     const devices = this.filterBrand(brand);
-    const normalizedQuery = normalizeSearchText(query);
-    const compactQuery = compactSearchText(query);
+    const normalizedQuery = normalizeText(query);
+    const terms = getSearchTerms(query);
 
     if (!normalizedQuery) {
       return devices;
     }
 
-    const queryTerms = normalizedQuery.split(' ').filter(Boolean);
-
-    const ranked = devices
-      .map(device => {
-        const name = String(device?.name || '');
-        const deviceBrand = String(device?.brand || '');
-        const id = String(device?.id || '');
-
-        const normalizedName = normalizeSearchText(name);
-        const normalizedFull = normalizeSearchText(`${deviceBrand} ${name}`);
-        const normalizedId = normalizeSearchText(id);
-        const compactName = compactSearchText(name);
-        const compactFull = compactSearchText(`${deviceBrand} ${name}`);
-        const compactId = compactSearchText(id);
-
-        let score = 0;
-
-        if (normalizedName === normalizedQuery) score = 1000;
-        else if (normalizedFull === normalizedQuery) score = 990;
-        else if (compactName === compactQuery) score = 980;
-        else if (compactFull === compactQuery) score = 970;
-        else if (normalizedId === normalizedQuery || compactId === compactQuery) score = 960;
-        else if (normalizedName.startsWith(normalizedQuery)) score = 900;
-        else if (normalizedFull.startsWith(normalizedQuery)) score = 890;
-        else if (compactName.startsWith(compactQuery)) score = 880;
-        else if (queryTerms.every(term => normalizedFull.includes(term))) score = 800;
-        else if (normalizedFull.includes(normalizedQuery)) score = 700;
-        else if (compactFull.includes(compactQuery)) score = 690;
-        else if (queryTerms.some(term => normalizedFull.includes(term))) score = 100;
-
-        return { device, score, name: normalizedName };
-      })
-      .filter(item => item.score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return a.name.localeCompare(b.name, 'es-MX');
+    // Si la búsqueda es solamente numérica, debe coincidir
+    // con ese número exacto y no con otros números.
+    if (/^\d+$/.test(normalizedQuery)) {
+      return devices.filter(device => {
+        const fullName = `${device?.brand || ''} ${device?.name || ''}`;
+        return containsModelNumber(fullName, normalizedQuery);
       });
+    }
 
-    return ranked.map(item => item.device);
+    // Si la búsqueda contiene un modelo numérico,
+    // todos los términos deben coincidir.
+    const hasNumber = terms.some(term => /^\d+$/.test(term));
+
+    if (hasNumber) {
+      return devices.filter(device => {
+        const fullName = `${device?.brand || ''} ${device?.name || ''}`;
+        return containsAllTerms(fullName, terms);
+      });
+    }
+
+    // Para búsquedas de texto, todos los términos deben coincidir.
+    return devices.filter(device => {
+      const fullName = `${device?.brand || ''} ${device?.name || ''}`;
+      return containsAllTerms(fullName, terms);
+    });
   }
 
   getDeviceById(id) {
@@ -126,6 +120,11 @@ export class CatalogEngine {
 
   getDeviceByIndex(index) {
     const safeIndex = Number(index);
-    return Number.isInteger(safeIndex) ? this.catalog[safeIndex] || null : null;
+
+    if (!Number.isInteger(safeIndex)) {
+      return null;
+    }
+
+    return this.catalog[safeIndex] || null;
   }
 }
