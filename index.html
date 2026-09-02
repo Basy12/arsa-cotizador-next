@@ -2,10 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>ARSA Cotizador Next</title>
 
+  <!-- Dependencias externas -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -16,6 +20,7 @@
 <body>
   <main class="crystal-app">
 
+    <!-- PANEL DE CONFIGURACIÓN -->
     <section class="glass-panel">
       <div class="panel-title">
         <span>ARSA Cotizador Next</span>
@@ -32,48 +37,131 @@
       </div>
 
       <div id="catalogStatus" class="catalog-status">
-        Carga tu Excel vigente para cotizar.
+        Carga tu Excel vigente para consultar promociones.
       </div>
 
-      <div id="commercialAlert" class="commercial-alert" hidden></div>
+      <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
+      <div
+        id="commercialAlert"
+        class="commercial-alert"
+        data-export-hide
+        hidden
+      ></div>
 
-      <div class="section-title">Cliente</div>
+      <div class="section-title">👤 Cliente</div>
 
       <div class="field-group">
-        <label class="field-label" for="clientNameInput">Nombre completo</label>
+        <label class="field-label" for="clientNameInput">
+          Nombre completo
+        </label>
+
         <input
           id="clientNameInput"
           class="glass-input"
           type="text"
           placeholder="Ej. Juan Pérez"
+          autocomplete="name"
         >
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="clientPhoneInput">Teléfono</label>
+        <label class="field-label" for="clientPhoneInput">
+          Teléfono
+        </label>
+
         <input
           id="clientPhoneInput"
           class="glass-input"
           type="tel"
           placeholder="Ej. 55 1234 5678"
+          autocomplete="tel"
         >
       </div>
 
-      <div class="section-title">Operación</div>
+      <div class="section-title">📋 Operación</div>
 
       <div class="field-group">
-        <label class="field-label" for="operationSelect">Tipo de operación</label>
+        <label class="field-label" for="operationSelect">
+          Tipo de operación
+        </label>
 
         <select id="operationSelect" class="glass-select">
           <option value="renovacion">Renovación</option>
-          <option value="renovacion_anticipada">Renovación anticipada</option>
+          <option value="renovacion_anticipada">
+            Renovación anticipada
+          </option>
           <option value="linea_nueva">Línea nueva</option>
           <option value="linea_adicional">Línea adicional</option>
           <option value="portabilidad">Portabilidad</option>
         </select>
       </div>
 
-      <div class="section-title">Equipo y plan</div>
+      <!-- COMPARATIVA DE RENOVACIÓN ANTICIPADA -->
+      <div class="toggle-row">
+        <span class="field-label toggle-label">
+          Comparativa de renovación anticipada
+        </span>
+
+        <label class="toggle-switch">
+          <input
+            id="earlyRenewalToggle"
+            type="checkbox"
+          >
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <section
+        id="earlyRenewalInputs"
+        class="early-renewal-inputs"
+        hidden
+      >
+        <div class="field-group">
+          <label
+            class="field-label"
+            for="naturalCompletionInput"
+          >
+            Pago si concluye plazo natural
+          </label>
+
+          <input
+            id="naturalCompletionInput"
+            class="glass-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ej. 12000"
+            inputmode="decimal"
+          >
+        </div>
+
+        <div class="field-group">
+          <label
+            class="field-label"
+            for="earlyRenewalPaymentInput"
+          >
+            Pago si renueva antes
+          </label>
+
+          <input
+            id="earlyRenewalPaymentInput"
+            class="glass-input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ej. 4200"
+            inputmode="decimal"
+          >
+        </div>
+
+        <div
+          id="earlyRenewalWarning"
+          class="early-renewal-warning"
+          hidden
+        ></div>
+      </section>
+
+      <div class="section-title">📱 Equipo y plan</div>
 
       <div class="field-group">
         <label class="field-label" for="brandSelect">Marca</label>
@@ -84,18 +172,39 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="deviceSearch">Buscar equipo</label>
+        <label class="field-label" for="deviceSearch">
+          Buscar equipo
+        </label>
 
         <input
           id="deviceSearch"
           class="glass-input"
           type="search"
           placeholder="Ej. iPhone 17 256GB"
+          autocomplete="off"
         >
       </div>
 
+      <div class="toggle-row included-filter-row">
+        <span class="field-label toggle-label">
+          Solo equipos incluidos
+        </span>
+
+        <label class="toggle-switch">
+          <input id="includedOnlyToggle" type="checkbox">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <p class="helper-text">
+        Filtra los equipos que aparecen como incluido en el Excel
+        para el plan y plazo seleccionados.
+      </p>
+
       <div class="field-group">
-        <label class="field-label" for="deviceSelect">Modelo</label>
+        <label class="field-label" for="deviceSelect">
+          Modelo
+        </label>
 
         <select id="deviceSelect" class="glass-select">
           <option value="">Carga el Excel para consultar equipos</option>
@@ -140,19 +249,26 @@
           min="0"
           step="0.01"
           value="0"
+          inputmode="decimal"
         >
       </div>
 
-      <div class="section-title">Opciones</div>
+      <div class="section-title">⚙️ Opciones</div>
 
       <div class="toggle-row">
-        <span class="field-label toggle-label">Portabilidad especial</span>
+        <span class="field-label toggle-label">
+          Portabilidad especial
+        </span>
 
         <label class="toggle-switch">
           <input id="portabilityToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
+
+      <p class="helper-text">
+        Planes normales: 20%. Titanio: 10% durante los primeros 12 meses.
+      </p>
 
       <div class="toggle-row">
         <span class="field-label toggle-label">Agregar seguro</span>
@@ -164,15 +280,72 @@
       </div>
 
       <div class="toggle-row">
-        <span class="field-label toggle-label">Agregar control $50</span>
+        <span class="field-label toggle-label">
+          Agregar control $50
+        </span>
 
         <label class="toggle-switch">
           <input id="controlToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
+
+      <div class="section-title">🧾 Datos de cotización</div>
+
+      <div class="field-group">
+        <label class="field-label" for="advisorInput">
+          Ejecutivo / Asesor
+        </label>
+
+        <input
+          id="advisorInput"
+          class="glass-input"
+          type="text"
+          value="Akatzin Ortega"
+          placeholder="Nombre del ejecutivo"
+        >
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="quoteDateInput">
+          Fecha de cotización
+        </label>
+
+        <input
+          id="quoteDateInput"
+          class="glass-input"
+          type="date"
+        >
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="folioInput">Folio</label>
+
+        <div class="input-action-row">
+          <input
+            id="folioInput"
+            class="glass-input"
+            type="text"
+            readonly
+          >
+
+          <button
+            id="refreshFolioBtn"
+            class="icon-button"
+            type="button"
+            title="Generar un nuevo folio"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+
+      <button id="resetQuoteBtn" class="btn-reset" type="button">
+        ↺ Nueva cotización
+      </button>
     </section>
 
+    <!-- TARJETA PARA CLIENTE / EXPORTACIÓN -->
     <section>
       <article id="quoteCard" class="quote-card">
 
@@ -194,7 +367,13 @@
 
         <div class="quote-body">
 
-          <div id="cardCommercialAlert" class="card-commercial-alert" hidden></div>
+          <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
+          <div
+            id="cardCommercialAlert"
+            class="card-commercial-alert"
+            data-export-hide
+            hidden
+          ></div>
 
           <section class="client-info-section">
             <div class="client-row">
@@ -214,15 +393,27 @@
           </section>
 
           <section class="quote-device-info">
-            <span id="cardDeviceBrand" class="device-brand-badge">ARSA</span>
+            <span id="cardDeviceBrand" class="device-brand-badge">
+              ARSA
+            </span>
 
             <h1 id="cardDeviceName" class="device-title">
               Selecciona un equipo
             </h1>
 
-            <p id="cardValidity" class="validity-text"></p>
+            <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
+            <p
+              id="cardValidity"
+              class="validity-text"
+              data-export-hide
+            ></p>
 
-            <div id="promoStatus" class="promo-status">
+            <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
+            <div
+              id="promoStatus"
+              class="promo-status"
+              data-export-hide
+            >
               Selecciona un equipo para consultar promoción.
             </div>
           </section>
@@ -235,12 +426,22 @@
 
             <div>
               <div class="price-item-label">Precio promocional</div>
-              <div id="cardPromoPrice" class="price-item-value discount">$0.00</div>
+              <div
+                id="cardPromoPrice"
+                class="price-item-value discount"
+              >
+                $0.00
+              </div>
             </div>
 
             <div>
               <div class="price-item-label">Pago inicial</div>
-              <div id="cardDownPayment" class="price-item-value">$0.00</div>
+              <div
+                id="cardDownPayment"
+                class="price-item-value"
+              >
+                $0.00
+              </div>
             </div>
 
             <div>
@@ -255,21 +456,64 @@
             <div class="benefits-grid">
               <div class="benefit-card benefit-green">
                 <div class="benefit-label">Ahorro equipo</div>
-                <div id="cardTotalSavings" class="benefit-value">$0.00</div>
+                <div id="cardTotalSavings" class="benefit-value">
+                  $0.00
+                </div>
               </div>
 
               <div class="benefit-card benefit-blue">
                 <div class="benefit-label">Descuento</div>
-                <div id="cardDiscountPercent" class="benefit-value">0%</div>
+                <div id="cardDiscountPercent" class="benefit-value">
+                  0%
+                </div>
               </div>
             </div>
           </section>
 
-          <section id="quoteBreakdown" class="quote-breakdown">
+          <!-- COMPARATIVA SOLO SI EL ASESOR LA ACTIVA -->
+          <section
+            id="earlyRenewalCard"
+            class="early-renewal-card"
+            hidden
+          >
+            <div class="early-renewal-title">
+              Comparativa de renovación anticipada
+            </div>
+
+            <div class="early-renewal-row">
+              <span>Si concluye su plazo natural</span>
+              <strong id="naturalCompletionValue">$0.00</strong>
+            </div>
+
+            <div class="early-renewal-row">
+              <span>Si renueva antes</span>
+              <strong id="earlyRenewalPaymentValue">$0.00</strong>
+            </div>
+
+            <div class="early-renewal-row">
+              <span>Ahorro estimado</span>
+              <strong id="earlyRenewalSavingsValue">$0.00</strong>
+            </div>
+
+            <div class="early-renewal-row early-renewal-percent">
+              <span>Porcentaje que paga al renovar antes</span>
+              <strong id="earlyRenewalPercentValue">—</strong>
+            </div>
+          </section>
+
+          <!-- DESGLOSE OPCIONAL -->
+          <section
+            id="quoteBreakdown"
+            class="quote-breakdown"
+            hidden
+          >
             <div class="breakdown-title">Desglose mensual</div>
 
             <div class="breakdown-row">
-              <span id="breakdownDeviceLabel">Equipo a 36 meses</span>
+              <span id="breakdownDeviceLabel">
+                Equipo a 36 meses
+              </span>
+
               <strong id="breakdownDevice">$0.00</strong>
             </div>
 
@@ -278,16 +522,49 @@
               <strong id="breakdownPlan">$0.00</strong>
             </div>
 
-            <div id="breakdownInsuranceRow" class="breakdown-row" hidden>
+            <div
+              id="breakdownPortabilityRow"
+              class="breakdown-row"
+              hidden
+            >
+              <span>Descuento por portabilidad</span>
+              <strong id="breakdownPortability">$0.00</strong>
+            </div>
+
+            <div
+              id="breakdownInsuranceRow"
+              class="breakdown-row"
+              hidden
+            >
               <span>Seguro</span>
               <strong id="breakdownInsurance">$0.00</strong>
             </div>
 
-            <div id="breakdownControlRow" class="breakdown-row" hidden>
-              <span>Control</span>
+            <div
+              id="breakdownControlRow"
+              class="breakdown-row"
+              hidden
+            >
+              <span>Control de saldo</span>
               <strong id="breakdownControl">$0.00</strong>
             </div>
+
+            <div class="breakdown-row breakdown-total">
+              <span>Total mensual</span>
+              <strong id="breakdownTotal">$0.00</strong>
+            </div>
           </section>
+
+          <!-- ESTE BOTÓN NO SALE EN PNG/PDF -->
+          <button
+            id="toggleBreakdown"
+            class="btn-crystal breakdown-toggle"
+            type="button"
+            data-export-hide
+          >
+            <span id="toggleBreakdownIcon">＋</span>
+            <span id="toggleBreakdownText">Agregar desglose</span>
+          </button>
 
           <section id="totalBand" class="total-hero-band">
             <div>
@@ -303,19 +580,46 @@
             </div>
           </section>
 
+          <footer class="quote-footer">
+            <div>
+              <div>
+                Atendido por
+                <strong id="cardAdvisor">Akatzin Ortega</strong>
+              </div>
+
+              <div class="footer-muted">
+                Cotización informativa generada por ARSA.
+              </div>
+
+              <div id="cardDate" class="footer-date"></div>
+            </div>
+
+            <div id="cardFolio" class="folio-badge"></div>
+          </footer>
+
+          <!-- ESTOS BOTONES NO APARECEN EN PNG/PDF -->
           <div class="btn-row export-actions" data-export-hide>
-            <button id="btnExportPNG" class="btn-crystal btn-primary" type="button">
-              📸 PNG
+            <button
+              id="btnExportPNG"
+              class="btn-crystal btn-primary"
+              type="button"
+            >
+              📸 Guardar PNG
             </button>
 
-            <button id="btnExportPDF" class="btn-crystal" type="button">
-              📄 PDF
+            <button
+              id="btnExportPDF"
+              class="btn-crystal"
+              type="button"
+            >
+              📄 Guardar PDF
             </button>
           </div>
 
         </div>
       </article>
     </section>
+
   </main>
 
   <script type="module">
