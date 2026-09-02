@@ -1,6 +1,11 @@
 /**
  * ARSA Cotizador Next - Catalog Engine
  * Búsqueda estricta, filtrado por marca y filtro de equipos incluidos.
+ *
+ * Compatibilidad:
+ * - Promociones importadas con estructura:
+ *   { type: 'INCLUDED' | 'PRICE' | 'NOT_AVAILABLE' | 'MISSING', value, raw }
+ * - Catálogos antiguos que pudieran guardar números o strings directamente.
  */
 
 function normalizeText(value = '') {
@@ -19,26 +24,85 @@ function getTerms(value = '') {
     .filter(Boolean);
 }
 
-function matchesAllTerms(text, terms) {
-  const normalized = normalizeText(text);
-  return terms.every(term => normalized.includes(term));
+function matchesAllTerms(text, terms = []) {
+  const normalizedText = normalizeText(text);
+
+  return terms.every(term => normalizedText.includes(term));
 }
 
 function hasExactNumber(text, number) {
-  const normalized = normalizeText(text);
+  const normalizedText = normalizeText(text);
   const expression = new RegExp(`\\b${number}\\b`);
-  return expression.test(normalized);
+
+  return expression.test(normalizedText);
+}
+
+function isIncludedPromotion(promotion) {
+  if (promotion === null || promotion === undefined) {
+    return false;
+  }
+
+  /*
+   * Catálogo nuevo:
+   * {
+   *   type: 'INCLUDED',
+   *   value: 0,
+   *   raw: 'INCLUIDO'
+   * }
+   */
+  if (typeof promotion === 'object') {
+    const type = String(promotion.type || '').toUpperCase();
+    const value = Number(promotion.value);
+
+    return (
+      type === 'INCLUDED' ||
+      (type === 'PRICE' && Number.isFinite(value) && value === 0)
+    );
+  }
+
+  /*
+   * Compatibilidad con catálogos antiguos:
+   * 0 numérico.
+   */
+  if (typeof promotion === 'number') {
+    return promotion === 0;
+  }
+
+  /*
+   * Compatibilidad con texto directo:
+   * 'INCLUIDO', '$0', '0', etc.
+   */
+  if (typeof promotion === 'string') {
+    const normalized = promotion
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toUpperCase();
+
+    return (
+      normalized.includes('INCLUIDO') ||
+      normalized === '0' ||
+      normalized === '$0' ||
+      normalized === '$0.00'
+    );
+  }
+
+  return false;
 }
 
 export class CatalogEngine {
   constructor(initialCatalog = []) {
     this.catalog = [];
     this.brands = [];
+
     this.setCatalog(initialCatalog);
   }
 
   setCatalog(newCatalog = []) {
-    this.catalog = Array.isArray(newCatalog) ? newCatalog : [];
+    this.catalog = Array.isArray(newCatalog)
+      ? newCatalog
+      : [];
+
     this.brands = this.extractUniqueBrands(this.catalog);
   }
 
@@ -83,29 +147,32 @@ export class CatalogEngine {
   }
 
   /**
-   * Regresa true si el equipo tiene precio incluido ($0 / INCLUDED)
-   * para el plan y plazo solicitados.
+   * Devuelve true únicamente cuando la promoción del equipo,
+   * para el plan y plazo seleccionados, sea INCLUIDO o precio $0.
    *
-   * Titanio se resuelve desde el motor comercial, por eso este filtro
-   * se utiliza solamente para planes normales del Excel.
+   * IMPORTANTE:
+   * - N/A no es incluido.
+   * - Celda vacía no es incluido.
+   * - Precio numérico distinto de $0 no es incluido.
    */
   isIncludedFor(device, planName, termMonths) {
-    const promo = device?.promos?.[planName]?.[termMonths];
+    const promotion = device?.promos?.[planName]?.[termMonths];
 
-    return (
-      promo?.type === 'INCLUDED' ||
-      (
-        promo?.type === 'PRICE' &&
-        Number(promo?.value) === 0
-      )
-    );
+    return isIncludedPromotion(promotion);
   }
 
   /**
-   * Busca equipos por marca y texto.
+   * Busca dispositivos usando:
+   * - Marca.
+   * - Texto de búsqueda.
+   * - Filtro opcional "Solo equipos incluidos".
    *
-   * Si escribes solamente un número, como "17", busca el número como
-   * un término individual y evita resultados como "117" o "170".
+   * Ejemplos:
+   * searchDevice('APPLE', '17 256', {
+   *   includedOnly: false,
+   *   planName: 'Plata',
+   *   termMonths: 36
+   * });
    */
   searchDevice(brandName = '', query = '', options = {}) {
     const {
@@ -118,6 +185,12 @@ export class CatalogEngine {
 
     let results = this.filterBrand(brandName);
 
+    /*
+     * Filtro "Solo equipos incluidos".
+     *
+     * Solo devuelve equipos cuyo valor exacto en Excel para
+     * plan + plazo diga INCLUIDO o corresponda al valor $0.
+     */
     if (includedOnly) {
       results = results.filter(device =>
         this.isIncludedFor(device, planName, termMonths)
@@ -138,10 +211,22 @@ export class CatalogEngine {
       const numericTerms = terms.filter(term => /^\d+$/.test(term));
       const textTerms = terms.filter(term => !/^\d+$/.test(term));
 
+      /*
+       * Si escribes "17", debe coincidir como número completo.
+       * Así no encuentra equipos con 117, 170 o 2017 por error.
+       */
       const numbersMatch = numericTerms.every(number =>
         hasExactNumber(searchableText, number)
       );
 
+      /*
+       * Texto como:
+       * "iphone pro"
+       * "honor x5d"
+       * "samsung galaxy"
+       *
+       * Todos los términos deben existir.
+       */
       const wordsMatch = matchesAllTerms(searchableText, textTerms);
 
       return numbersMatch && wordsMatch;
