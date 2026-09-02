@@ -3,7 +3,8 @@ import { loadWorkbook } from './excelImporter.js';
 import {
   calculatePromotion,
   calculateTotal,
-  formatMXN
+  formatMXN,
+  TITANIO_TERM
 } from './quoteEngine.js';
 import {
   saveCatalogData,
@@ -17,6 +18,7 @@ const catalogEngine = new CatalogEngine();
 
 const elements = {};
 let selectedDevice = null;
+
 let commercialValidation = {
   valid: false,
   blockExport: true,
@@ -183,7 +185,7 @@ async function importExcel(event) {
     updateDevices();
 
     elements.catalogStatus.textContent =
-      `Excel vigente cargado: ${result.catalog.length} equipos.`;
+      `Excel cargado: ${result.catalog.length} equipos disponibles para cotización.`;
 
     renderQuote();
   } catch (error) {
@@ -201,19 +203,17 @@ async function importExcel(event) {
 function populateBrands() {
   const currentBrand = elements.brandSelect.value || 'TODAS';
 
-  const options = [
+  elements.brandSelect.innerHTML = [
     '<option value="TODAS">Todas las marcas</option>',
     ...catalogEngine.getBrands().map(brand =>
       `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`
     )
-  ];
+  ].join('');
 
-  elements.brandSelect.innerHTML = options.join('');
-
-  const valid = [...elements.brandSelect.options]
+  const exists = [...elements.brandSelect.options]
     .some(option => option.value === currentBrand);
 
-  elements.brandSelect.value = valid ? currentBrand : 'TODAS';
+  elements.brandSelect.value = exists ? currentBrand : 'TODAS';
 }
 
 function updateDevices(preferredDeviceId = '') {
@@ -255,16 +255,18 @@ function updateDevices(preferredDeviceId = '') {
 function renderQuote() {
   const planName = elements.planSelect.value;
   const theme = resolvePlanTheme(planName);
+
   const isTitanio = planName.toLowerCase().includes('titanio');
 
-  if (isTitanio) {
-    elements.termSelect.value = '30';
+  if (isTitanio && Number(elements.termSelect.value) !== TITANIO_TERM) {
+    elements.termSelect.value = String(TITANIO_TERM);
   }
 
-  const term = Number(elements.termSelect.value) || 36;
+  const term = isTitanio
+    ? TITANIO_TERM
+    : Number(elements.termSelect.value) || 36;
 
-  document.documentElement.style.setProperty('--p1', theme.c1);
-  document.documentElement.style.setProperty('--p2', theme.c2);
+  applyCrystalTheme(theme);
 
   const hasPortability =
     elements.operationSelect.value === 'portabilidad' ||
@@ -272,7 +274,12 @@ function renderQuote() {
 
   const promo = selectedDevice
     ? calculatePromotion(selectedDevice, theme.name, term)
-    : { type: 'MISSING', value: null, raw: '' };
+    : {
+      type: 'MISSING',
+      value: null,
+      raw: '',
+      reason: ''
+    };
 
   const quote = calculateTotal({
     listPrice: selectedDevice?.list || 0,
@@ -290,13 +297,23 @@ function renderQuote() {
 
   commercialValidation = validateCommercialQuote({
     device: selectedDevice,
-    promo,
-    quote
+    promo
   });
 
   renderCommercialAlerts();
   renderCard(theme, quote, promo);
   persistState();
+}
+
+function applyCrystalTheme(theme) {
+  const root = document.documentElement;
+
+  root.style.setProperty('--p1', theme.c1);
+  root.style.setProperty('--p2', theme.c2);
+  root.style.setProperty('--plan-glow', theme.glow);
+  root.style.setProperty('--plan-glass', theme.glass);
+  root.style.setProperty('--plan-border', theme.border);
+  root.style.setProperty('--plan-text', theme.text);
 }
 
 function validateCommercialQuote({ device, promo }) {
@@ -321,56 +338,45 @@ function validateCommercialQuote({ device, promo }) {
     blockExport = true;
   }
 
-  if (promo?.type === 'NOT_AVAILABLE') {
+  if (promo.type === 'NOT_ELIGIBLE_PLAN') {
     messages.push({
-      type: 'danger',
-      text: 'No existe promoción disponible para esta combinación de equipo, plan y plazo.'
+      type: 'info',
+      text: promo.reason || 'Este equipo aplica desde el plan Plata.'
     });
 
     blockExport = true;
   }
 
-  if (promo?.type === 'MISSING' || promo?.type === 'INVALID') {
+  if (promo.type === 'NOT_AVAILABLE') {
     messages.push({
       type: 'danger',
-      text: 'No se encontró información comercial válida. Revisa el Excel vigente.'
+      text: promo.reason || 'No existe promoción para esta combinación.'
     });
 
     blockExport = true;
   }
 
-  if (device) {
-    const status = String(device.status || '').toLowerCase();
+  if (promo.type === 'MISSING' || promo.type === 'INVALID') {
+    messages.push({
+      type: 'danger',
+      text: 'No se encontró promoción válida. Revisa el Excel vigente.'
+    });
 
-    if (
-      status.includes('agotado') ||
-      status.includes('no resurtible') ||
-      status.includes('no resurt')
-    ) {
-      messages.push({
-        type: 'danger',
-        text: `El equipo está marcado como "${device.status}". No se recomienda exportar esta cotización.`
-      });
+    blockExport = true;
+  }
 
-      blockExport = true;
-    } else if (
-      status.includes('última') ||
-      status.includes('ultima') ||
-      status.includes('sobre pedido') ||
-      status.includes('revisar')
-    ) {
-      messages.push({
-        type: 'warning',
-        text: `Disponibilidad limitada: ${device.status}. Confirma existencias antes de enviar.`
-      });
-    }
+  if (device?.status) {
+    messages.push({
+      type: 'warning',
+      text: `Estatus comercial: ${device.status}. Confirma disponibilidad antes de enviar.`
+    });
+  }
 
-    if (device.validity) {
-      messages.push({
-        type: 'info',
-        text: `Vigencia comercial: ${device.validity}`
-      });
-    }
+  if (device?.validity) {
+    messages.push({
+      type: 'info',
+      text: `Vigencia comercial: ${device.validity}`
+    });
   }
 
   return {
@@ -381,17 +387,15 @@ function validateCommercialQuote({ device, promo }) {
 }
 
 function renderCommercialAlerts() {
-  renderAlertBox(
-    elements.commercialAlert,
-    commercialValidation.messages
-  );
+  renderAlertBox(elements.commercialAlert, commercialValidation.messages);
 
-  const importantMessages = commercialValidation.messages
-    .filter(message => message.type !== 'info');
+  const relevantCardMessages = commercialValidation.messages.filter(
+    message => message.type !== 'info'
+  );
 
   renderAlertBox(
     elements.cardCommercialAlert,
-    importantMessages
+    relevantCardMessages
   );
 
   elements.btnExportPNG.disabled = commercialValidation.blockExport;
@@ -426,10 +430,10 @@ function renderAlertBox(container, messages) {
 
 function renderCard(theme, quote, promo) {
   elements.cardPlanTitle.textContent = `Plan ${theme.name}`;
-  elements.cardPlanTerm.textContent =
-    quote.isTitanio
-      ? '30 meses obligatorios'
-      : `Plazo a ${quote.term} meses`;
+
+  elements.cardPlanTerm.textContent = quote.isTitanio
+    ? `Titanio · ${TITANIO_TERM} meses fijos`
+    : `Plazo a ${quote.term} meses`;
 
   elements.cardPlanPrice.textContent = formatMXN(theme.price);
 
@@ -459,9 +463,21 @@ function renderCard(theme, quote, promo) {
   if (promo.type === 'INCLUDED') {
     elements.cardPromoPrice.textContent = 'INCLUIDO';
     elements.cardPromoPrice.classList.add('included-price');
+  } else if (
+    promo.type === 'NOT_ELIGIBLE_PLAN' ||
+    promo.type === 'NOT_AVAILABLE' ||
+    promo.type === 'MISSING' ||
+    promo.type === 'INVALID'
+  ) {
+    elements.cardPromoPrice.textContent = 'N/A';
+    elements.cardPromoPrice.classList.add('not-available-price');
+    elements.cardPromoPrice.classList.remove('included-price');
   } else {
     elements.cardPromoPrice.textContent = formatMXN(quote.finalPrice);
-    elements.cardPromoPrice.classList.remove('included-price');
+    elements.cardPromoPrice.classList.remove(
+      'included-price',
+      'not-available-price'
+    );
   }
 
   elements.cardDownPayment.textContent = formatMXN(quote.payToday);
@@ -472,10 +488,9 @@ function renderCard(theme, quote, promo) {
   elements.cardDiscountPercent.textContent =
     `${quote.discountPercent.toFixed(2)}%`;
 
-  elements.breakdownDeviceLabel.textContent =
-    quote.isTitanio
-      ? 'Cargo mensual del equipo'
-      : `Equipo a ${quote.term} meses`;
+  elements.breakdownDeviceLabel.textContent = quote.isTitanio
+    ? 'Cargo mensual del equipo'
+    : `Equipo a ${quote.term} meses`;
 
   elements.breakdownDevice.textContent =
     formatMXN(quote.equipmentMonthly);
@@ -503,27 +518,29 @@ function renderCard(theme, quote, promo) {
 }
 
 function renderPromotionStatus(promo) {
-  const statusClass = {
+  const classMap = {
     INCLUDED: 'promo-included',
     PRICE: 'promo-ok',
+    NOT_ELIGIBLE_PLAN: 'promo-info',
     NOT_AVAILABLE: 'promo-danger',
     MISSING: 'promo-danger',
     INVALID: 'promo-danger'
   };
 
-  const texts = {
+  const textMap = {
     INCLUDED: 'Equipo incluido con el plan seleccionado.',
     PRICE: 'Precio promocional consultado desde Excel.',
-    NOT_AVAILABLE: 'No disponible para este plan y plazo.',
-    MISSING: 'Promoción no encontrada. Revisa el Excel.',
-    INVALID: 'Dato comercial inválido. Revisa el Excel.'
+    NOT_ELIGIBLE_PLAN: promo.reason || 'Este equipo aplica desde plan Plata.',
+    NOT_AVAILABLE: promo.reason || 'No disponible para este plan y plazo.',
+    MISSING: 'Promoción no encontrada. Revisa Excel.',
+    INVALID: 'Dato comercial inválido. Revisa Excel.'
   };
 
   elements.promoStatus.className =
-    `promo-status ${statusClass[promo.type] || 'promo-danger'}`;
+    `promo-status ${classMap[promo.type] || 'promo-danger'}`;
 
   elements.promoStatus.textContent =
-    texts[promo.type] || 'Promoción no disponible.';
+    textMap[promo.type] || 'Promoción no disponible.';
 }
 
 function persistState() {
@@ -545,7 +562,7 @@ function persistState() {
 
 async function exportPNG() {
   if (commercialValidation.blockExport) {
-    alert('No puedes exportar hasta corregir las alertas comerciales.');
+    alert('No puedes exportar hasta seleccionar una combinación comercial válida.');
     return;
   }
 
@@ -572,7 +589,7 @@ async function exportPNG() {
 
 async function exportPDF() {
   if (commercialValidation.blockExport) {
-    alert('No puedes exportar hasta corregir las alertas comerciales.');
+    alert('No puedes exportar hasta seleccionar una combinación comercial válida.');
     return;
   }
 
@@ -602,7 +619,6 @@ async function exportPDF() {
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-
   const margin = 8;
   const width = pageWidth - margin * 2;
   const height = (canvas.height * width) / canvas.width;
