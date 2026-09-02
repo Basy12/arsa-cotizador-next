@@ -1,8 +1,22 @@
+/* =========================================================
+   ARSA COTIZADOR NEXT
+   Crystal Glass UI — Versión corregida
+   ========================================================= */
+
 :root {
   --bg-dark: #07101c;
+
   --bg-gradient:
-    radial-gradient(circle at 10% 10%, rgba(23, 64, 135, 0.82), transparent 38%),
-    radial-gradient(circle at 92% 2%, rgba(0, 177, 239, 0.22), transparent 30%),
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(23, 64, 135, 0.82),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 92% 2%,
+      rgba(0, 177, 239, 0.22),
+      transparent 30%
+    ),
     linear-gradient(135deg, #050913, #10192b);
 
   --glass-bg: rgba(16, 28, 54, 0.64);
@@ -39,6 +53,10 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -62,6 +80,10 @@ select {
   font: inherit;
 }
 
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
 .crystal-app {
   display: grid;
   grid-template-columns: minmax(350px, 470px) minmax(0, 1fr);
@@ -70,6 +92,10 @@ select {
   margin: 0 auto;
   padding: 30px;
 }
+
+/* =========================================================
+   PANEL IZQUIERDO
+   ========================================================= */
 
 .glass-panel {
   padding: 25px;
@@ -247,6 +273,10 @@ select {
   line-height: 1.45;
 }
 
+/* =========================================================
+   BOTONES
+   ========================================================= */
+
 .btn-crystal,
 .btn-reset {
   display: inline-flex;
@@ -261,7 +291,10 @@ select {
   background: rgba(255, 255, 255, 0.09);
   font-weight: 900;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .btn-crystal:hover,
@@ -292,6 +325,15 @@ select {
   background: rgba(255, 114, 129, 0.12);
 }
 
+.button-disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   COMPARATIVA RENOVACIÓN ANTICIPADA
+   ========================================================= */
+
 .early-renewal-inputs {
   margin-top: 8px;
   padding: 16px;
@@ -311,7 +353,9 @@ select {
   font-weight: 700;
 }
 
-/* TARJETA */
+/* =========================================================
+   TARJETA DE COTIZACIÓN
+   ========================================================= */
 
 .quote-card {
   position: relative;
@@ -418,6 +462,10 @@ select {
   padding: 29px;
 }
 
+/* =========================================================
+   DATOS DEL CLIENTE
+   ========================================================= */
+
 .client-info-section,
 .quote-pricing-grid,
 .quote-breakdown {
@@ -456,6 +504,10 @@ select {
   text-transform: none;
   white-space: nowrap;
 }
+
+/* =========================================================
+   EQUIPO Y PROMOCIÓN
+   ========================================================= */
 
 .quote-device-info {
   margin-bottom: 24px;
@@ -521,6 +573,10 @@ select {
   background: rgba(255, 114, 129, 0.15);
 }
 
+/* =========================================================
+   PRECIOS Y BENEFICIOS
+   ========================================================= */
+
 .quote-pricing-grid,
 .benefits-grid {
   display: grid;
@@ -566,6 +622,7 @@ select {
 }
 
 .benefit-card {
+  min-height: 96px;
   padding: 16px;
   border: 1px solid var(--plan-border);
   border-radius: var(--radius-sm);
@@ -575,7 +632,9 @@ select {
       var(--plan-glass),
       rgba(255, 255, 255, 0.04)
     );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
 .benefit-green {
@@ -593,6 +652,10 @@ select {
 .benefit-blue .benefit-value {
   color: var(--accent-cyan);
 }
+
+/* =========================================================
+   COMPARATIVA RENOVACIÓN ANTICIPADA
+   ========================================================= */
 
 .early-renewal-card {
   margin-bottom: 23px;
@@ -643,6 +706,10 @@ select {
 .early-renewal-percent strong {
   color: var(--accent-emerald);
 }
+
+/* =========================================================
+   DESGLOSE MENSUAL
+   ========================================================= */
 
 .quote-breakdown[hidden] {
   display: none;
@@ -696,48 +763,94 @@ select {
   font-size: 1.25rem;
 }
 
+/* =========================================================
+   TOTAL MENSUAL — CORREGIDO
+   ========================================================= */
+
 .total-hero-band {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 23px 27px;
+  gap: 24px;
+  min-height: 140px;
+  margin-top: 4px;
+  padding: 25px 29px;
+  overflow: hidden;
   border: 1px solid var(--plan-border);
   border-radius: var(--radius-md);
   background:
     linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.13),
       var(--plan-glass)
     ),
     var(--p-gradient);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    0 14px 34px var(--plan-glow);
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 14px 36px var(--plan-glow);
   backdrop-filter: blur(22px) saturate(165%);
   -webkit-backdrop-filter: blur(22px) saturate(165%);
 }
 
+.total-hero-band::before {
+  position: absolute;
+  top: -95px;
+  left: -85px;
+  width: 320px;
+  height: 320px;
+  pointer-events: none;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.24),
+    transparent 68%
+  );
+  filter: blur(18px);
+}
+
+.total-hero-band > * {
+  position: relative;
+  z-index: 1;
+}
+
+.total-hero-band > div:first-child {
+  min-width: 0;
+}
+
 .total-label {
+  max-width: 290px;
   color: rgba(255, 255, 255, 0.92);
   font-size: 0.82rem;
-  font-weight: 850;
+  font-weight: 900;
+  letter-spacing: 0.035em;
+  line-height: 1.25;
   text-transform: uppercase;
 }
 
 .total-savings {
-  margin-top: 6px;
-  color: white;
-  font-size: 0.86rem;
+  max-width: 350px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .total-hero-val {
-  color: white;
-  font-size: clamp(2.2rem, 5vw, 3.1rem);
+  min-width: max-content;
+  color: #ffffff;
+  font-size: clamp(2rem, 4.6vw, 3.25rem);
   font-weight: 950;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  text-align: right;
   white-space: nowrap;
 }
+
+/* =========================================================
+   PIE Y EXPORTACIÓN
+   ========================================================= */
 
 .quote-footer {
   display: flex;
@@ -780,6 +893,10 @@ select {
   margin-top: 23px;
 }
 
+/* =========================================================
+   ALERTAS INTERNAS
+   ========================================================= */
+
 .commercial-alert,
 .card-commercial-alert {
   margin-bottom: 16px;
@@ -812,10 +929,9 @@ select {
   background: rgba(53, 199, 255, 0.10);
 }
 
-.button-disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (max-width: 1050px) {
   .crystal-app {
@@ -855,8 +971,15 @@ select {
   }
 
   .total-hero-band {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    align-items: start;
+    min-height: auto;
+    gap: 15px;
+  }
+
+  .total-hero-val {
+    font-size: 2.65rem;
+    text-align: left;
   }
 
   .quote-footer {
