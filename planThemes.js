@@ -1,6 +1,6 @@
 /**
  * ARSA Cotizador Next - Theme Engine
- * Temas Crystal Glass y contraste adaptativo por plan.
+ * Colores Crystal Glass con contraste adaptativo.
  */
 
 export const PLAN_THEMES = {
@@ -49,35 +49,35 @@ export const PLAN_THEMES = {
   Plata: {
     name: 'Plata',
     price: 650,
-    c1: '#f6f9fd',
-    c2: '#8498b0',
-    glow: 'rgba(218, 235, 255, 0.42)',
-    glass: 'rgba(226, 239, 255, 0.18)',
-    border: 'rgba(255, 255, 255, 0.62)',
-    text: '#142238',
-    textSoft: '#2e4059',
-    headerShadow: '0 1px 1px rgba(255, 255, 255, 0.60)',
+    c1: '#eef4fb',
+    c2: '#7e91a8',
+    glow: 'rgba(215, 234, 255, 0.45)',
+    glass: 'rgba(224, 240, 255, 0.20)',
+    border: 'rgba(255, 255, 255, 0.68)',
+    text: '#13233a',
+    textSoft: '#2b405d',
+    headerShadow: '0 1px 1px rgba(255, 255, 255, 0.72)',
     lightPlan: true
   },
 
   Oro: {
     name: 'Oro',
     price: 725,
-    c1: '#e8c55d',
-    c2: '#ab7811',
-    glow: 'rgba(240, 198, 84, 0.40)',
-    glass: 'rgba(240, 198, 84, 0.17)',
-    border: 'rgba(255, 231, 151, 0.46)',
+    c1: '#e9c75f',
+    c2: '#aa7710',
+    glow: 'rgba(240, 199, 87, 0.40)',
+    glass: 'rgba(240, 199, 87, 0.17)',
+    border: 'rgba(255, 232, 155, 0.46)',
     text: '#ffffff',
     textSoft: 'rgba(255, 255, 255, 0.90)',
-    headerShadow: '0 2px 8px rgba(71, 43, 0, 0.28)',
+    headerShadow: '0 2px 8px rgba(71, 43, 0, 0.30)',
     lightPlan: false
   },
 
   Black: {
     name: 'Black',
     price: 825,
-    c1: '#373540',
+    c1: '#393640',
     c2: '#050506',
     glow: 'rgba(158, 112, 255, 0.28)',
     glass: 'rgba(255, 255, 255, 0.08)',
@@ -92,13 +92,13 @@ export const PLAN_THEMES = {
     name: 'Platino',
     price: 1035,
     c1: '#ffffff',
-    c2: '#8495aa',
-    glow: 'rgba(236, 247, 255, 0.48)',
-    glass: 'rgba(243, 250, 255, 0.20)',
-    border: 'rgba(255, 255, 255, 0.66)',
-    text: '#142238',
-    textSoft: '#2e4059',
-    headerShadow: '0 1px 1px rgba(255, 255, 255, 0.65)',
+    c2: '#7f91a7',
+    glow: 'rgba(235, 247, 255, 0.50)',
+    glass: 'rgba(242, 250, 255, 0.22)',
+    border: 'rgba(255, 255, 255, 0.70)',
+    text: '#13233a',
+    textSoft: '#2b405d',
+    headerShadow: '0 1px 1px rgba(255, 255, 255, 0.74)',
     lightPlan: true
   },
 
@@ -120,13 +120,13 @@ export const PLAN_THEMES = {
     name: 'Titanio',
     price: 1599,
     c1: '#cbd0d7',
-    c2: '#4e5964',
+    c2: '#4d5863',
     glow: 'rgba(210, 221, 232, 0.40)',
     glass: 'rgba(218, 227, 236, 0.16)',
     border: 'rgba(245, 248, 252, 0.44)',
     text: '#ffffff',
     textSoft: 'rgba(255, 255, 255, 0.88)',
-    headerShadow: '0 2px 8px rgba(0, 0, 0, 0.28)',
+    headerShadow: '0 2px 8px rgba(0, 0, 0, 0.30)',
     lightPlan: false
   }
 };
@@ -136,9 +136,9 @@ export function resolvePlanTheme(planName = '') {
     .trim()
     .toLowerCase();
 
-  const foundTheme = Object.values(PLAN_THEMES).find(theme =>
-    normalized.includes(theme.name.toLowerCase())
+  const theme = Object.values(PLAN_THEMES).find(item =>
+    normalized.includes(item.name.toLowerCase())
   );
 
-  return foundTheme || PLAN_THEMES['Azul 1'];
+  return theme || PLAN_THEMES['Azul 1'];
 }
