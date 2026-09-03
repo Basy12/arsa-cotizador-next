@@ -1,6 +1,6 @@
 /**
  * ARSA Cotizador Next - app.js
- * Controlador principal de la aplicación.
+ * Controlador principal.
  */
 
 import { CatalogEngine } from './catalogEngine.js';
@@ -19,10 +19,11 @@ import {
   clearState
 } from './storageService.js';
 import { resolvePlanTheme } from './planThemes.js';
+import { getRecommendedDevices } from './recommendationEngine.js';
 
 const catalogEngine = new CatalogEngine();
-
 const elements = {};
+
 let selectedDevice = null;
 let currentQuote = null;
 
@@ -68,6 +69,13 @@ function captureElements() {
     'insuranceToggle',
     'controlToggle',
 
+    'currentMonthlyInput',
+    'desiredMonthlyInput',
+    'toleranceInput',
+    'findSimilarBtn',
+    'findBudgetBtn',
+    'findCheapestBtn',
+
     'advisorInput',
     'quoteDateInput',
     'folioInput',
@@ -100,6 +108,11 @@ function captureElements() {
     'earlyRenewalPaymentValue',
     'earlyRenewalSavingsValue',
     'earlyRenewalPercentValue',
+
+    'recommendationsPanel',
+    'recommendationsSubtitle',
+    'recommendationsList',
+    'closeRecommendationsBtn',
 
     'quoteBreakdown',
     'toggleBreakdown',
@@ -178,7 +191,10 @@ function setupListeners() {
     elements.advisorInput,
     elements.quoteDateInput,
     elements.naturalCompletionInput,
-    elements.earlyRenewalPaymentInput
+    elements.earlyRenewalPaymentInput,
+    elements.currentMonthlyInput,
+    elements.desiredMonthlyInput,
+    elements.toleranceInput
   ].forEach(element => {
     element.addEventListener('input', renderQuote);
     element.addEventListener('change', renderQuote);
@@ -202,6 +218,27 @@ function setupListeners() {
   });
 
   elements.resetQuoteBtn.addEventListener('click', resetQuote);
+
+  elements.findSimilarBtn.addEventListener('click', () => {
+    showRecommendations('similar');
+  });
+
+  elements.findBudgetBtn.addEventListener('click', () => {
+    showRecommendations('budget');
+  });
+
+  elements.findCheapestBtn.addEventListener('click', () => {
+    showRecommendations('cheapest');
+  });
+
+  elements.closeRecommendationsBtn.addEventListener('click', () => {
+    elements.recommendationsPanel.hidden = true;
+  });
+
+  elements.recommendationsList.addEventListener(
+    'click',
+    handleRecommendationClick
+  );
 
   elements.btnExportPNG.addEventListener('click', exportPNG);
   elements.btnExportPDF.addEventListener('click', exportPDF);
@@ -255,7 +292,10 @@ function restoreState(state) {
     'quoteDateInput',
     'folioInput',
     'naturalCompletionInput',
-    'earlyRenewalPaymentInput'
+    'earlyRenewalPaymentInput',
+    'currentMonthlyInput',
+    'desiredMonthlyInput',
+    'toleranceInput'
   ];
 
   inputIds.forEach(id => {
@@ -292,6 +332,10 @@ function restoreState(state) {
 
   if (!elements.folioInput.value) {
     elements.folioInput.value = generateFolio();
+  }
+
+  if (!elements.toleranceInput.value) {
+    elements.toleranceInput.value = '100';
   }
 }
 
@@ -359,15 +403,6 @@ function populateBrands() {
     : 'TODAS';
 }
 
-/**
- * Actualiza los modelos visibles.
- *
- * Incluye:
- * - Búsqueda estricta.
- * - Filtro de equipos incluidos.
- * - Orden por vigencia más actual.
- * - Vigencia visible dentro del selector.
- */
 function updateDevices(preferredId = '') {
   if (!catalogEngine.catalog.length) {
     elements.deviceSelect.innerHTML =
@@ -378,7 +413,6 @@ function updateDevices(preferredId = '') {
   }
 
   const planName = elements.planSelect.value;
-
   const isTitanio = planName
     .toLowerCase()
     .includes('titanio');
@@ -401,13 +435,6 @@ function updateDevices(preferredId = '') {
     }
   );
 
-  /*
-   * Ordenar por vigencia:
-   * 1. INDEFINIDO primero.
-   * 2. Fecha final más lejana.
-   * 3. Fecha inicial más reciente.
-   * 4. Nombre comercial.
-   */
   devices = [...devices].sort((a, b) => {
     const validityA = getValiditySortValue(a.validity);
     const validityB = getValiditySortValue(b.validity);
@@ -441,12 +468,6 @@ function updateDevices(preferredId = '') {
     String(device.id) === String(previousId)
   );
 
-  /*
-   * Cada opción muestra:
-   *
-   * APPLE - Apple iPhone 17 256GB
-   * Vigencia: 08 MAYO 26 - 26 SEPTIEMBRE 26
-   */
   elements.deviceSelect.innerHTML = devices.map(device => {
     const modelName = `${device.brand} - ${device.name}`;
     const validity = formatValidityForSelector(device.validity);
@@ -462,10 +483,6 @@ function updateDevices(preferredId = '') {
     `;
   }).join('');
 
-  /*
-   * Si el dispositivo anterior no pertenece al resultado nuevo,
-   * selecciona el primer equipo con la vigencia más actual.
-   */
   const selectedId = previousStillExists
     ? String(previousId)
     : String(devices[0].id);
@@ -617,10 +634,6 @@ function validateCommercialQuote(device, promotion) {
     blockExport = true;
   }
 
-  /*
-   * Estatus y vigencia son avisos internos.
-   * No bloquean la exportación.
-   */
   if (device?.status) {
     messages.push({
       type: 'warning',
@@ -908,6 +921,198 @@ function renderEarlyRenewalComparison() {
   }
 }
 
+/**
+ * Genera y muestra equipos sugeridos.
+ */
+function showRecommendations(mode) {
+  if (!catalogEngine.catalog.length) {
+    alert('Carga el Excel antes de buscar alternativas.');
+    return;
+  }
+
+  if (!currentQuote || commercialValidation.blockExport) {
+    alert(
+      'Selecciona primero un equipo con una promoción válida.'
+    );
+    return;
+  }
+
+  const theme = resolvePlanTheme(elements.planSelect.value);
+
+  const hasPortability =
+    elements.operationSelect.value === 'portabilidad' ||
+    elements.portabilityToggle.checked;
+
+  const recommendationData = getRecommendedDevices({
+    catalog: catalogEngine.catalog,
+    selectedDeviceId: selectedDevice?.id || '',
+    planName: theme.name,
+    termMonths: currentQuote.term,
+    baseRent: theme.price,
+    downPayment: Number(elements.downPaymentInput.value) || 0,
+    hasPortability,
+    hasInsurance: elements.insuranceToggle.checked,
+    hasControl: elements.controlToggle.checked,
+    currentMonthly: currentQuote.totalMonthlyPromo,
+    currentPayment: Number(elements.currentMonthlyInput.value) || 0,
+    desiredPayment: Number(elements.desiredMonthlyInput.value) || 0,
+    tolerance: Number(elements.toleranceInput.value) || 100,
+    mode,
+    limit: 4
+  });
+
+  renderRecommendations(recommendationData);
+}
+
+function renderRecommendations(data) {
+  const titles = {
+    similar: 'Mensualidad similar',
+    budget: 'Dentro de presupuesto',
+    cheapest: 'Alternativas más económicas'
+  };
+
+  const sources = {
+    deseada: 'mensualidad deseada',
+    actual: 'mensualidad actual',
+    cotizacion: 'cotización actual'
+  };
+
+  elements.recommendationsPanel.hidden = false;
+
+  elements.recommendationsSubtitle.textContent =
+    `${titles[data.mode]} · Objetivo ${formatMXN(data.target)} ` +
+    `(${sources[data.targetSource]}) · Tolerancia +/- ${formatMXN(data.tolerance)}`;
+
+  if (!data.results.length) {
+    elements.recommendationsList.innerHTML = `
+      <div class="recommendation-empty">
+        No se encontraron alternativas comerciales válidas.
+      </div>
+    `;
+
+    return;
+  }
+
+  elements.recommendationsList.innerHTML = data.results
+    .map((item, index) => {
+      const differenceText = formatDifference(item.difference);
+
+      const tags = item.reasons
+        .map(reason => `<span>${escapeHtml(reason)}</span>`)
+        .join('');
+
+      const validity = item.device.validity
+        ? `Vigencia: ${escapeHtml(item.device.validity)}`
+        : 'Vigencia no indicada';
+
+      return `
+        <article class="recommendation-item">
+          <div class="recommendation-top">
+            <div class="recommendation-rank">${index + 1}</div>
+
+            <div class="recommendation-name-wrap">
+              <div class="recommendation-brand">
+                ${escapeHtml(item.device.brand || 'ARSA')}
+              </div>
+
+              <div class="recommendation-name">
+                ${escapeHtml(item.device.name || 'Equipo')}
+              </div>
+            </div>
+
+            <div class="recommendation-price">
+              ${formatMXN(item.monthly)}
+              <small>por mes</small>
+            </div>
+          </div>
+
+          <div class="recommendation-difference ${item.difference <= 0 ? 'difference-good' : 'difference-warn'}">
+            ${escapeHtml(differenceText)}
+          </div>
+
+          <div class="recommendation-tags">
+            ${tags}
+          </div>
+
+          <div class="recommendation-validity">
+            ${validity}
+          </div>
+
+          <button
+            class="use-recommendation-btn"
+            type="button"
+            data-device-id="${escapeHtml(String(item.device.id))}"
+          >
+            Usar este equipo
+          </button>
+        </article>
+      `;
+    })
+    .join('');
+}
+
+function handleRecommendationClick(event) {
+  const button = event.target.closest('[data-device-id]');
+
+  if (!button) {
+    return;
+  }
+
+  const deviceId = button.dataset.deviceId;
+
+  if (!deviceId) {
+    return;
+  }
+
+  useRecommendedDevice(deviceId);
+}
+
+function useRecommendedDevice(deviceId) {
+  const device = catalogEngine.getDeviceById(deviceId);
+
+  if (!device) {
+    alert('No se encontró el equipo seleccionado.');
+    return;
+  }
+
+  /*
+   * Para garantizar que el equipo recomendado se vea incluso
+   * si el buscador actual tenía otro texto/filtro:
+   */
+  elements.includedOnlyToggle.checked = false;
+  elements.brandSelect.value = device.brand;
+  elements.deviceSearch.value = '';
+
+  updateDevices(device.id);
+
+  elements.deviceSelect.value = String(device.id);
+
+  selectedDevice = device;
+
+  elements.recommendationsPanel.hidden = true;
+
+  renderQuote();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+function formatDifference(difference) {
+  const value = Number(difference) || 0;
+
+  if (value === 0) {
+    return 'Misma mensualidad estimada';
+  }
+
+  if (value < 0) {
+    return `${formatMXN(Math.abs(value))} menos al mes`;
+  }
+
+  return `${formatMXN(value)} más al mes`;
+}
+
 function toggleBreakdown() {
   const willShow = elements.quoteBreakdown.hidden;
 
@@ -956,6 +1161,10 @@ function resetQuote() {
   elements.insuranceToggle.checked = false;
   elements.controlToggle.checked = false;
 
+  elements.currentMonthlyInput.value = '';
+  elements.desiredMonthlyInput.value = '';
+  elements.toleranceInput.value = '100';
+
   elements.advisorInput.value = 'Akatzin Ortega';
 
   setDefaultDate();
@@ -966,6 +1175,9 @@ function resetQuote() {
   elements.toggleBreakdownIcon.textContent = '＋';
   elements.toggleBreakdownText.textContent =
     'Agregar desglose';
+
+  elements.recommendationsPanel.hidden = true;
+  elements.recommendationsList.innerHTML = '';
 
   updateDevices('');
   syncSelectedDevice();
@@ -1002,6 +1214,10 @@ function saveState() {
     insuranceToggle: elements.insuranceToggle.checked,
     controlToggle: elements.controlToggle.checked,
 
+    currentMonthlyInput: elements.currentMonthlyInput.value,
+    desiredMonthlyInput: elements.desiredMonthlyInput.value,
+    toleranceInput: elements.toleranceInput.value,
+
     advisorInput: elements.advisorInput.value,
     quoteDateInput: elements.quoteDateInput.value,
     folioInput: elements.folioInput.value
@@ -1013,6 +1229,7 @@ async function exportPNG() {
     alert(
       'No puedes exportar hasta seleccionar una combinación comercial válida.'
     );
+
     return;
   }
 
@@ -1053,6 +1270,7 @@ async function exportPDF() {
     alert(
       'No puedes exportar hasta seleccionar una combinación comercial válida.'
     );
+
     return;
   }
 
@@ -1090,6 +1308,7 @@ async function exportPDF() {
     const pageHeight = pdf.internal.pageSize.getHeight();
 
     const margin = 8;
+
     const maxWidth = pageWidth - margin * 2;
     const maxHeight = pageHeight - margin * 2;
 
@@ -1122,26 +1341,15 @@ async function exportPDF() {
 }
 
 /* =========================================================
-   FUNCIONES DE VIGENCIA PARA SELECTOR DE MODELOS
+   VIGENCIAS
    ========================================================= */
 
 function formatValidityForSelector(validity = '') {
-  const text = String(validity || '')
+  return String(validity || '')
     .trim()
     .replace(/\s+/g, ' ');
-
-  return text;
 }
 
-/**
- * Convierte vigencias como:
- *
- * "08 MAYO 26 - 26 SEPTIEMBRE 26"
- * "21 JULIO 26 - INDEFINIDO"
- * "01 SEPTIEMBRE 26 - 30 SEPTIEMBRE 26"
- *
- * en valores que se pueden ordenar.
- */
 function getValiditySortValue(validity = '') {
   const text = String(validity || '')
     .normalize('NFD')
@@ -1149,9 +1357,6 @@ function getValiditySortValue(validity = '') {
     .toUpperCase()
     .trim();
 
-  /*
-   * Las promociones INDEFINIDAS aparecen primero.
-   */
   if (text.includes('INDEFINIDO')) {
     return {
       start: extractFirstDateFromValidity(text),
