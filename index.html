@@ -9,7 +9,6 @@
 
   <title>ARSA Cotizador Next</title>
 
-  <!-- Dependencias externas -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -20,7 +19,7 @@
 <body>
   <main class="crystal-app">
 
-    <!-- PANEL DE CONFIGURACIÓN -->
+    <!-- PANEL IZQUIERDO -->
     <section class="glass-panel">
       <div class="panel-title">
         <span>ARSA Cotizador Next</span>
@@ -40,7 +39,6 @@
         Carga tu Excel vigente para consultar promociones.
       </div>
 
-      <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
       <div
         id="commercialAlert"
         class="commercial-alert"
@@ -96,17 +94,13 @@
         </select>
       </div>
 
-      <!-- COMPARATIVA DE RENOVACIÓN ANTICIPADA -->
       <div class="toggle-row">
         <span class="field-label toggle-label">
           Comparativa de renovación anticipada
         </span>
 
         <label class="toggle-switch">
-          <input
-            id="earlyRenewalToggle"
-            type="checkbox"
-          >
+          <input id="earlyRenewalToggle" type="checkbox">
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -131,7 +125,6 @@
             min="0"
             step="0.01"
             placeholder="Ej. 12000"
-            inputmode="decimal"
           >
         </div>
 
@@ -150,7 +143,6 @@
             min="0"
             step="0.01"
             placeholder="Ej. 4200"
-            inputmode="decimal"
           >
         </div>
 
@@ -185,7 +177,7 @@
         >
       </div>
 
-      <div class="toggle-row included-filter-row">
+      <div class="toggle-row">
         <span class="field-label toggle-label">
           Solo equipos incluidos
         </span>
@@ -197,14 +189,11 @@
       </div>
 
       <p class="helper-text">
-        Filtra los equipos que aparecen como incluido en el Excel
-        para el plan y plazo seleccionados.
+        Filtra equipos incluidos según el plan y plazo seleccionados.
       </p>
 
       <div class="field-group">
-        <label class="field-label" for="deviceSelect">
-          Modelo
-        </label>
+        <label class="field-label" for="deviceSelect">Modelo</label>
 
         <select id="deviceSelect" class="glass-select">
           <option value="">Carga el Excel para consultar equipos</option>
@@ -249,7 +238,6 @@
           min="0"
           step="0.01"
           value="0"
-          inputmode="decimal"
         >
       </div>
 
@@ -289,6 +277,85 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+
+      <!-- BUSCADOR POR PRESUPUESTO -->
+      <div class="section-title">💡 Buscador por presupuesto</div>
+
+      <div class="field-group">
+        <label class="field-label" for="currentMonthlyInput">
+          Mensualidad actual del cliente
+        </label>
+
+        <input
+          id="currentMonthlyInput"
+          class="glass-input"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Ej. 850"
+        >
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="desiredMonthlyInput">
+          Mensualidad deseada / Máximo
+        </label>
+
+        <input
+          id="desiredMonthlyInput"
+          class="glass-input"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Ej. 750"
+        >
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="toleranceInput">
+          Tolerancia mensual (+/-)
+        </label>
+
+        <input
+          id="toleranceInput"
+          class="glass-input"
+          type="number"
+          min="0"
+          step="1"
+          value="100"
+        >
+      </div>
+
+      <div class="recommendation-buttons">
+        <button
+          id="findSimilarBtn"
+          class="btn-crystal"
+          type="button"
+        >
+          ≈ Similar
+        </button>
+
+        <button
+          id="findBudgetBtn"
+          class="btn-crystal btn-primary"
+          type="button"
+        >
+          🎯 Presupuesto
+        </button>
+
+        <button
+          id="findCheapestBtn"
+          class="btn-crystal"
+          type="button"
+        >
+          ↓ Más económico
+        </button>
+      </div>
+
+      <p class="helper-text">
+        Las sugerencias usan el mismo plan, plazo, pago inicial,
+        seguro, control y portabilidad de la cotización actual.
+      </p>
 
       <div class="section-title">🧾 Datos de cotización</div>
 
@@ -333,7 +400,7 @@
             id="refreshFolioBtn"
             class="icon-button"
             type="button"
-            title="Generar un nuevo folio"
+            title="Generar otro folio"
           >
             ↻
           </button>
@@ -345,7 +412,7 @@
       </button>
     </section>
 
-    <!-- TARJETA PARA CLIENTE / EXPORTACIÓN -->
+    <!-- PANEL DERECHO -->
     <section>
       <article id="quoteCard" class="quote-card">
 
@@ -367,7 +434,6 @@
 
         <div class="quote-body">
 
-          <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
           <div
             id="cardCommercialAlert"
             class="card-commercial-alert"
@@ -401,14 +467,12 @@
               Selecciona un equipo
             </h1>
 
-            <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
             <p
               id="cardValidity"
               class="validity-text"
               data-export-hide
             ></p>
 
-            <!-- SOLO INTERNO: NO SALE EN PNG/PDF -->
             <div
               id="promoStatus"
               class="promo-status"
@@ -456,21 +520,16 @@
             <div class="benefits-grid">
               <div class="benefit-card benefit-green">
                 <div class="benefit-label">Ahorro equipo</div>
-                <div id="cardTotalSavings" class="benefit-value">
-                  $0.00
-                </div>
+                <div id="cardTotalSavings" class="benefit-value">$0.00</div>
               </div>
 
               <div class="benefit-card benefit-blue">
                 <div class="benefit-label">Descuento</div>
-                <div id="cardDiscountPercent" class="benefit-value">
-                  0%
-                </div>
+                <div id="cardDiscountPercent" class="benefit-value">0%</div>
               </div>
             </div>
           </section>
 
-          <!-- COMPARATIVA SOLO SI EL ASESOR LA ACTIVA -->
           <section
             id="earlyRenewalCard"
             class="early-renewal-card"
@@ -501,7 +560,37 @@
             </div>
           </section>
 
-          <!-- DESGLOSE OPCIONAL -->
+          <!-- SUGERENCIAS: INTERNO, NO SE EXPORTA -->
+          <section
+            id="recommendationsPanel"
+            class="recommendations-panel"
+            data-export-hide
+            hidden
+          >
+            <div class="recommendations-header">
+              <div>
+                <div class="recommendations-title">
+                  💡 Modelos sugeridos
+                </div>
+
+                <div id="recommendationsSubtitle" class="recommendations-subtitle">
+                  Alternativas comerciales
+                </div>
+              </div>
+
+              <button
+                id="closeRecommendationsBtn"
+                class="close-recommendations"
+                type="button"
+                title="Cerrar sugerencias"
+              >
+                ×
+              </button>
+            </div>
+
+            <div id="recommendationsList" class="recommendations-list"></div>
+          </section>
+
           <section
             id="quoteBreakdown"
             class="quote-breakdown"
@@ -555,7 +644,6 @@
             </div>
           </section>
 
-          <!-- ESTE BOTÓN NO SALE EN PNG/PDF -->
           <button
             id="toggleBreakdown"
             class="btn-crystal breakdown-toggle"
@@ -575,9 +663,7 @@
               </div>
             </div>
 
-            <div id="cardTotalMonthly" class="total-hero-val">
-              $0.00
-            </div>
+            <div id="cardTotalMonthly" class="total-hero-val">$0.00</div>
           </section>
 
           <footer class="quote-footer">
@@ -597,7 +683,6 @@
             <div id="cardFolio" class="folio-badge"></div>
           </footer>
 
-          <!-- ESTOS BOTONES NO APARECEN EN PNG/PDF -->
           <div class="btn-row export-actions" data-export-hide>
             <button
               id="btnExportPNG"
