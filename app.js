@@ -1,6 +1,6 @@
 /**
  * ARSA Cotizador Next - app.js
- * Controlador principal con contraste dinámico por plan.
+ * Aplicación principal con contraste adaptable por plan.
  */
 
 import { CatalogEngine } from './catalogEngine.js';
@@ -559,6 +559,11 @@ function renderQuote() {
   saveState();
 }
 
+/**
+ * Aplicación de tema:
+ * Plata y Platino activan atributos de alto contraste
+ * tanto para encabezado como total mensual.
+ */
 function applyTheme(theme) {
   const root = document.documentElement;
 
@@ -598,12 +603,20 @@ function applyTheme(theme) {
     '0 2px 8px rgba(0, 0, 0, 0.22)'
   );
 
-  const planBand = document.querySelector('.plan-header-band');
+  const lightPlan = Boolean(theme.lightPlan);
+
+  const planBand =
+    document.querySelector('.plan-header-band');
+
+  const totalBand =
+    document.querySelector('.total-hero-band');
 
   if (planBand) {
-    planBand.dataset.lightPlan = String(
-      Boolean(theme.lightPlan)
-    );
+    planBand.dataset.lightPlan = String(lightPlan);
+  }
+
+  if (totalBand) {
+    totalBand.dataset.lightPlan = String(lightPlan);
   }
 }
 
@@ -1265,7 +1278,6 @@ async function exportPNG() {
         backgroundColor: '#090d16',
         useCORS: true,
         logging: false,
-
         onclone: clonedDocument => {
           clonedDocument
             .querySelectorAll('[data-export-hide]')
@@ -1305,7 +1317,6 @@ async function exportPDF() {
         backgroundColor: '#090d16',
         useCORS: true,
         logging: false,
-
         onclone: clonedDocument => {
           clonedDocument
             .querySelectorAll('[data-export-hide]')
@@ -1317,7 +1328,6 @@ async function exportPDF() {
     );
 
     const imageData = canvas.toDataURL('image/png');
-
     const { jsPDF } = window.jspdf;
 
     const pdf = new jsPDF({
@@ -1361,10 +1371,6 @@ async function exportPDF() {
     alert('No se pudo generar el PDF.');
   }
 }
-
-/* =========================================================
-   VIGENCIAS
-   ========================================================= */
 
 function formatValidityForSelector(validity = '') {
   return String(validity || '')
@@ -1455,10 +1461,6 @@ function parseSpanishDate(dateText = '') {
 
   return new Date(year, month, day, 12, 0, 0);
 }
-
-/* =========================================================
-   UTILIDADES
-   ========================================================= */
 
 function setDefaultDate() {
   const now = new Date();
