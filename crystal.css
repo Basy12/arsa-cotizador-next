@@ -1,5 +1,5 @@
 /* =========================================================
-   ARSA NEXT — BUSCADOR POR PRESUPUESTO Y RECOMENDACIONES
+   Recomendaciones por presupuesto
    ========================================================= */
 
 .recommendation-buttons {
@@ -15,7 +15,6 @@
   font-size: 0.88rem;
 }
 
-/* Panel interno: no se exporta gracias a data-export-hide */
 .recommendations-panel {
   margin-bottom: 22px;
   padding: 18px;
