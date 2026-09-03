@@ -1,6 +1,6 @@
 /**
  * ARSA Cotizador Next - app.js
- * Controlador principal.
+ * Controlador principal con contraste dinámico por plan.
  */
 
 import { CatalogEngine } from './catalogEngine.js';
@@ -253,7 +253,8 @@ function hydrateStoredData() {
     populateBrands();
     updateDevices('');
 
-    const fileName = savedCatalog.meta?.fileName || 'Catálogo guardado';
+    const fileName =
+      savedCatalog.meta?.fileName || 'Catálogo guardado';
 
     elements.catalogStatus.textContent =
       `Catálogo listo: ${savedCatalog.catalog.length} equipos (${fileName}).`;
@@ -413,6 +414,7 @@ function updateDevices(preferredId = '') {
   }
 
   const planName = elements.planSelect.value;
+
   const isTitanio = planName
     .toLowerCase()
     .includes('titanio');
@@ -558,23 +560,51 @@ function renderQuote() {
 }
 
 function applyTheme(theme) {
-  document.documentElement.style.setProperty('--p1', theme.c1);
-  document.documentElement.style.setProperty('--p2', theme.c2);
+  const root = document.documentElement;
 
-  document.documentElement.style.setProperty(
+  root.style.setProperty('--p1', theme.c1);
+  root.style.setProperty('--p2', theme.c2);
+
+  root.style.setProperty(
     '--plan-glow',
     theme.glow || 'rgba(54, 197, 255, 0.35)'
   );
 
-  document.documentElement.style.setProperty(
+  root.style.setProperty(
     '--plan-glass',
     theme.glass || 'rgba(54, 197, 255, 0.15)'
   );
 
-  document.documentElement.style.setProperty(
+  root.style.setProperty(
     '--plan-border',
     theme.border || 'rgba(154, 234, 255, 0.40)'
   );
+
+  root.style.setProperty(
+    '--plan-text',
+    theme.text || '#ffffff'
+  );
+
+  root.style.setProperty(
+    '--plan-text-soft',
+    theme.textSoft ||
+    theme.text ||
+    'rgba(255, 255, 255, 0.88)'
+  );
+
+  root.style.setProperty(
+    '--plan-header-shadow',
+    theme.headerShadow ||
+    '0 2px 8px rgba(0, 0, 0, 0.22)'
+  );
+
+  const planBand = document.querySelector('.plan-header-band');
+
+  if (planBand) {
+    planBand.dataset.lightPlan = String(
+      Boolean(theme.lightPlan)
+    );
+  }
 }
 
 function validateCommercialQuote(device, promotion) {
@@ -921,9 +951,6 @@ function renderEarlyRenewalComparison() {
   }
 }
 
-/**
- * Genera y muestra equipos sugeridos.
- */
 function showRecommendations(mode) {
   if (!catalogEngine.catalog.length) {
     alert('Carga el Excel antes de buscar alternativas.');
@@ -995,8 +1022,6 @@ function renderRecommendations(data) {
 
   elements.recommendationsList.innerHTML = data.results
     .map((item, index) => {
-      const differenceText = formatDifference(item.difference);
-
       const tags = item.reasons
         .map(reason => `<span>${escapeHtml(reason)}</span>`)
         .join('');
@@ -1026,8 +1051,12 @@ function renderRecommendations(data) {
             </div>
           </div>
 
-          <div class="recommendation-difference ${item.difference <= 0 ? 'difference-good' : 'difference-warn'}">
-            ${escapeHtml(differenceText)}
+          <div class="recommendation-difference ${
+            item.difference <= 0
+              ? 'difference-good'
+              : 'difference-warn'
+          }">
+            ${escapeHtml(formatDifference(item.difference))}
           </div>
 
           <div class="recommendation-tags">
@@ -1075,10 +1104,6 @@ function useRecommendedDevice(deviceId) {
     return;
   }
 
-  /*
-   * Para garantizar que el equipo recomendado se vea incluso
-   * si el buscador actual tenía otro texto/filtro:
-   */
   elements.includedOnlyToggle.checked = false;
   elements.brandSelect.value = device.brand;
   elements.deviceSearch.value = '';
@@ -1229,7 +1254,6 @@ async function exportPNG() {
     alert(
       'No puedes exportar hasta seleccionar una combinación comercial válida.'
     );
-
     return;
   }
 
@@ -1246,260 +1270,4 @@ async function exportPNG() {
           clonedDocument
             .querySelectorAll('[data-export-hide]')
             .forEach(element => {
-              element.style.display = 'none';
-            });
-        }
-      }
-    );
-
-    const link = document.createElement('a');
-
-    link.download =
-      `Cotizacion-${safeFileName(elements.folioInput.value)}.png`;
-
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  } catch (error) {
-    console.error(error);
-    alert('No se pudo generar el PNG.');
-  }
-}
-
-async function exportPDF() {
-  if (commercialValidation.blockExport) {
-    alert(
-      'No puedes exportar hasta seleccionar una combinación comercial válida.'
-    );
-
-    return;
-  }
-
-  try {
-    const canvas = await window.html2canvas(
-      elements.quoteCard,
-      {
-        scale: 2,
-        backgroundColor: '#090d16',
-        useCORS: true,
-        logging: false,
-
-        onclone: clonedDocument => {
-          clonedDocument
-            .querySelectorAll('[data-export-hide]')
-            .forEach(element => {
-              element.style.display = 'none';
-            });
-        }
-      }
-    );
-
-    const imageData = canvas.toDataURL('image/png');
-
-    const { jsPDF } = window.jspdf;
-
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const margin = 8;
-
-    const maxWidth = pageWidth - margin * 2;
-    const maxHeight = pageHeight - margin * 2;
-
-    const scale = Math.min(
-      maxWidth / canvas.width,
-      maxHeight / canvas.height
-    );
-
-    const width = canvas.width * scale;
-    const height = canvas.height * scale;
-
-    pdf.addImage(
-      imageData,
-      'PNG',
-      (pageWidth - width) / 2,
-      margin,
-      width,
-      height,
-      undefined,
-      'FAST'
-    );
-
-    pdf.save(
-      `Cotizacion-${safeFileName(elements.folioInput.value)}.pdf`
-    );
-  } catch (error) {
-    console.error(error);
-    alert('No se pudo generar el PDF.');
-  }
-}
-
-/* =========================================================
-   VIGENCIAS
-   ========================================================= */
-
-function formatValidityForSelector(validity = '') {
-  return String(validity || '')
-    .trim()
-    .replace(/\s+/g, ' ');
-}
-
-function getValiditySortValue(validity = '') {
-  const text = String(validity || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .trim();
-
-  if (text.includes('INDEFINIDO')) {
-    return {
-      start: extractFirstDateFromValidity(text),
-      end: Number.MAX_SAFE_INTEGER
-    };
-  }
-
-  const dateMatches = text.match(
-    /\b\d{1,2}\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{2,4}\b/g
-  ) || [];
-
-  const dates = dateMatches
-    .map(parseSpanishDate)
-    .filter(Boolean);
-
-  return {
-    start: dates[0]?.getTime() || 0,
-    end: dates[dates.length - 1]?.getTime() || 0
-  };
-}
-
-function extractFirstDateFromValidity(validityText = '') {
-  const match = String(validityText).match(
-    /\b\d{1,2}\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{2,4}\b/
-  );
-
-  const date = match
-    ? parseSpanishDate(match[0])
-    : null;
-
-  return date ? date.getTime() : 0;
-}
-
-function parseSpanishDate(dateText = '') {
-  const months = {
-    ENERO: 0,
-    FEBRERO: 1,
-    MARZO: 2,
-    ABRIL: 3,
-    MAYO: 4,
-    JUNIO: 5,
-    JULIO: 6,
-    AGOSTO: 7,
-    SEPTIEMBRE: 8,
-    OCTUBRE: 9,
-    NOVIEMBRE: 10,
-    DICIEMBRE: 11
-  };
-
-  const parts = String(dateText)
-    .trim()
-    .toUpperCase()
-    .split(/\s+/);
-
-  if (parts.length !== 3) {
-    return null;
-  }
-
-  const day = Number(parts[0]);
-  const month = months[parts[1]];
-  let year = Number(parts[2]);
-
-  if (
-    !Number.isFinite(day) ||
-    month === undefined ||
-    !Number.isFinite(year)
-  ) {
-    return null;
-  }
-
-  if (year < 100) {
-    year += 2000;
-  }
-
-  return new Date(year, month, day, 12, 0, 0);
-}
-
-/* =========================================================
-   UTILIDADES
-   ========================================================= */
-
-function setDefaultDate() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-
-  elements.quoteDateInput.value =
-    new Date(now.getTime() - offset)
-      .toISOString()
-      .slice(0, 10);
-}
-
-function generateFolio() {
-  const now = new Date();
-
-  const date = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0')
-  ].join('');
-
-  const random = Math.floor(1000 + Math.random() * 9000);
-
-  return `ARSA-${date}-${random}`;
-}
-
-function formatLongDate(value) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(`${value}T12:00:00`);
-
-  return new Intl.DateTimeFormat('es-MX', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(date);
-}
-
-function operationName(value) {
-  const names = {
-    renovacion: 'Renovación',
-    renovacion_anticipada: 'Renovación anticipada',
-    linea_nueva: 'Línea nueva',
-    linea_adicional: 'Línea adicional',
-    portabilidad: 'Portabilidad'
-  };
-
-  return names[value] || 'Renovación';
-}
-
-function safeFileName(value = '') {
-  return String(value)
-    .replace(/[\\/:*?"<>|]+/g, '')
-    .replace(/\s+/g, '_')
-    .trim() || 'Cotizacion-ARSA';
-}
-
-function escapeHtml(value = '') {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+              element.style.display
