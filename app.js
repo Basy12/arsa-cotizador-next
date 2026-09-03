@@ -1,6 +1,6 @@
 /**
  * ARSA Cotizador Next - app.js
- * Controlador principal.
+ * Controlador principal de la aplicación.
  */
 
 import { CatalogEngine } from './catalogEngine.js';
@@ -21,8 +21,8 @@ import {
 import { resolvePlanTheme } from './planThemes.js';
 
 const catalogEngine = new CatalogEngine();
-const elements = {};
 
+const elements = {};
 let selectedDevice = null;
 let currentQuote = null;
 
@@ -138,17 +138,17 @@ function setupListeners() {
   elements.excelFileInput.addEventListener('change', importExcel);
 
   elements.brandSelect.addEventListener('change', () => {
-    updateDevices();
+    updateDevices('');
     renderQuote();
   });
 
   elements.deviceSearch.addEventListener('input', () => {
-    updateDevices();
+    updateDevices('');
     renderQuote();
   });
 
   elements.includedOnlyToggle.addEventListener('change', () => {
-    updateDevices();
+    updateDevices('');
     renderQuote();
   });
 
@@ -158,12 +158,12 @@ function setupListeners() {
   });
 
   elements.planSelect.addEventListener('change', () => {
-    updateDevices();
+    updateDevices('');
     renderQuote();
   });
 
   elements.termSelect.addEventListener('change', () => {
-    updateDevices();
+    updateDevices('');
     renderQuote();
   });
 
@@ -214,12 +214,15 @@ function hydrateStoredData() {
     catalogEngine.setCatalog(savedCatalog.catalog);
 
     populateBrands();
-    updateDevices();
+    updateDevices('');
 
     const fileName = savedCatalog.meta?.fileName || 'Catálogo guardado';
 
     elements.catalogStatus.textContent =
       `Catálogo listo: ${savedCatalog.catalog.length} equipos (${fileName}).`;
+  } else {
+    elements.catalogStatus.textContent =
+      'Carga tu Excel vigente para consultar promociones.';
   }
 
   const savedState = loadFormState();
@@ -295,7 +298,9 @@ function restoreState(state) {
 async function importExcel(event) {
   const file = event.target.files?.[0];
 
-  if (!file) return;
+  if (!file) {
+    return;
+  }
 
   try {
     elements.catalogStatus.textContent = 'Procesando Excel...';
@@ -310,7 +315,7 @@ async function importExcel(event) {
     });
 
     populateBrands();
-    updateDevices();
+    updateDevices('');
     syncSelectedDevice();
 
     elements.catalogStatus.textContent =
@@ -323,35 +328,60 @@ async function importExcel(event) {
     elements.catalogStatus.textContent =
       'No se pudo importar el Excel.';
 
-    alert(error.message || 'Error al importar Excel.');
+    alert(
+      error.message ||
+      'Ocurrió un error al importar el archivo Excel.'
+    );
   } finally {
     event.target.value = '';
   }
 }
 
 function populateBrands() {
-  const current = elements.brandSelect.value || 'TODAS';
+  const currentBrand = elements.brandSelect.value || 'TODAS';
 
-  elements.brandSelect.innerHTML = [
+  const options = [
     '<option value="TODAS">Todas las marcas</option>',
-    ...catalogEngine.getBrands().map(brand =>
-      `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`
-    )
-  ].join('');
+    ...catalogEngine.getBrands().map(brand => `
+      <option value="${escapeHtml(brand)}">
+        ${escapeHtml(brand)}
+      </option>
+    `)
+  ];
+
+  elements.brandSelect.innerHTML = options.join('');
 
   const exists = [...elements.brandSelect.options]
-    .some(option => option.value === current);
+    .some(option => option.value === currentBrand);
 
-  elements.brandSelect.value = exists ? current : 'TODAS';
+  elements.brandSelect.value = exists
+    ? currentBrand
+    : 'TODAS';
 }
 
+/**
+ * Actualiza los modelos visibles.
+ *
+ * Incluye:
+ * - Búsqueda estricta.
+ * - Filtro de equipos incluidos.
+ * - Orden por vigencia más actual.
+ * - Vigencia visible dentro del selector.
+ */
 function updateDevices(preferredId = '') {
   if (!catalogEngine.catalog.length) {
+    elements.deviceSelect.innerHTML =
+      '<option value="">Carga el Excel para consultar equipos</option>';
+
+    selectedDevice = null;
     return;
   }
 
   const planName = elements.planSelect.value;
-  const isTitanio = planName.toLowerCase().includes('titanio');
+
+  const isTitanio = planName
+    .toLowerCase()
+    .includes('titanio');
 
   if (isTitanio) {
     elements.termSelect.value = String(TITANIO_TERM);
@@ -361,7 +391,7 @@ function updateDevices(preferredId = '') {
     ? TITANIO_TERM
     : Number(elements.termSelect.value) || 36;
 
-  const devices = catalogEngine.searchDevice(
+  let devices = catalogEngine.searchDevice(
     elements.brandSelect.value,
     elements.deviceSearch.value,
     {
@@ -371,31 +401,78 @@ function updateDevices(preferredId = '') {
     }
   );
 
+  /*
+   * Ordenar por vigencia:
+   * 1. INDEFINIDO primero.
+   * 2. Fecha final más lejana.
+   * 3. Fecha inicial más reciente.
+   * 4. Nombre comercial.
+   */
+  devices = [...devices].sort((a, b) => {
+    const validityA = getValiditySortValue(a.validity);
+    const validityB = getValiditySortValue(b.validity);
+
+    if (validityB.end !== validityA.end) {
+      return validityB.end - validityA.end;
+    }
+
+    if (validityB.start !== validityA.start) {
+      return validityB.start - validityA.start;
+    }
+
+    return String(a.name || '').localeCompare(
+      String(b.name || ''),
+      'es-MX'
+    );
+  });
+
   if (!devices.length) {
     elements.deviceSelect.innerHTML =
-      '<option value="">No se encontraron equipos</option>';
+      '<option value="">No se encontraron equipos con esos filtros</option>';
 
+    elements.deviceSelect.value = '';
     selectedDevice = null;
     return;
   }
 
-  const currentId = preferredId || elements.deviceSelect.value;
+  const previousId = preferredId || elements.deviceSelect.value;
 
-  elements.deviceSelect.innerHTML = devices.map(device => `
-    <option value="${escapeHtml(String(device.id))}">
-      ${escapeHtml(`${device.brand} - ${device.name}`)}
-    </option>
-  `).join('');
-
-  const exists = devices.some(device =>
-    String(device.id) === String(currentId)
+  const previousStillExists = devices.some(device =>
+    String(device.id) === String(previousId)
   );
 
-  elements.deviceSelect.value = exists
-    ? String(currentId)
+  /*
+   * Cada opción muestra:
+   *
+   * APPLE - Apple iPhone 17 256GB
+   * Vigencia: 08 MAYO 26 - 26 SEPTIEMBRE 26
+   */
+  elements.deviceSelect.innerHTML = devices.map(device => {
+    const modelName = `${device.brand} - ${device.name}`;
+    const validity = formatValidityForSelector(device.validity);
+
+    const text = validity
+      ? `${modelName} | Vigencia: ${validity}`
+      : `${modelName} | Vigencia no indicada`;
+
+    return `
+      <option value="${escapeHtml(String(device.id))}">
+        ${escapeHtml(text)}
+      </option>
+    `;
+  }).join('');
+
+  /*
+   * Si el dispositivo anterior no pertenece al resultado nuevo,
+   * selecciona el primer equipo con la vigencia más actual.
+   */
+  const selectedId = previousStillExists
+    ? String(previousId)
     : String(devices[0].id);
 
-  syncSelectedDevice();
+  elements.deviceSelect.value = selectedId;
+
+  selectedDevice = catalogEngine.getDeviceById(selectedId);
 }
 
 function syncSelectedDevice() {
@@ -408,9 +485,14 @@ function renderQuote() {
   const planName = elements.planSelect.value;
   const theme = resolvePlanTheme(planName);
 
-  const isTitanio = planName.toLowerCase().includes('titanio');
+  const isTitanio = planName
+    .toLowerCase()
+    .includes('titanio');
 
-  if (isTitanio && Number(elements.termSelect.value) !== TITANIO_TERM) {
+  if (
+    isTitanio &&
+    Number(elements.termSelect.value) !== TITANIO_TERM
+  ) {
     elements.termSelect.value = String(TITANIO_TERM);
   }
 
@@ -461,9 +543,21 @@ function renderQuote() {
 function applyTheme(theme) {
   document.documentElement.style.setProperty('--p1', theme.c1);
   document.documentElement.style.setProperty('--p2', theme.c2);
-  document.documentElement.style.setProperty('--plan-glow', theme.glow || 'rgba(54, 197, 255, 0.35)');
-  document.documentElement.style.setProperty('--plan-glass', theme.glass || 'rgba(54, 197, 255, 0.15)');
-  document.documentElement.style.setProperty('--plan-border', theme.border || 'rgba(154, 234, 255, 0.40)');
+
+  document.documentElement.style.setProperty(
+    '--plan-glow',
+    theme.glow || 'rgba(54, 197, 255, 0.35)'
+  );
+
+  document.documentElement.style.setProperty(
+    '--plan-glass',
+    theme.glass || 'rgba(54, 197, 255, 0.15)'
+  );
+
+  document.documentElement.style.setProperty(
+    '--plan-border',
+    theme.border || 'rgba(154, 234, 255, 0.40)'
+  );
 }
 
 function validateCommercialQuote(device, promotion) {
@@ -491,7 +585,9 @@ function validateCommercialQuote(device, promotion) {
   if (promotion.type === 'NOT_ELIGIBLE_PLAN') {
     messages.push({
       type: 'info',
-      text: promotion.reason || 'Este equipo aplica desde el plan Plata.'
+      text:
+        promotion.reason ||
+        'Este equipo aplica desde el plan Plata.'
     });
 
     blockExport = true;
@@ -500,7 +596,9 @@ function validateCommercialQuote(device, promotion) {
   if (promotion.type === 'NOT_AVAILABLE') {
     messages.push({
       type: 'danger',
-      text: promotion.reason || 'No existe promoción para esta combinación.'
+      text:
+        promotion.reason ||
+        'No existe promoción para esta combinación.'
     });
 
     blockExport = true;
@@ -512,21 +610,23 @@ function validateCommercialQuote(device, promotion) {
   ) {
     messages.push({
       type: 'danger',
-      text: 'No se encontró una promoción válida. Revisa el Excel.'
+      text:
+        'No se encontró una promoción válida. Revisa el Excel.'
     });
 
     blockExport = true;
   }
 
   /*
-   * ESTATUS DEL EXCEL:
-   * Nunca bloquea la exportación.
-   * Solo informa al ejecutivo para que confirme disponibilidad.
+   * Estatus y vigencia son avisos internos.
+   * No bloquean la exportación.
    */
   if (device?.status) {
     messages.push({
       type: 'warning',
-      text: `Estatus del catálogo: ${device.status}. Confirma disponibilidad antes de enviar.`
+      text:
+        `Estatus del catálogo: ${device.status}. ` +
+        'Confirma disponibilidad antes de enviar.'
     });
   }
 
@@ -550,16 +650,20 @@ function renderInternalAlerts() {
     commercialValidation.messages
   );
 
-  const cardMessages = commercialValidation.messages
-    .filter(message => message.type !== 'info');
+  const cardMessages = commercialValidation.messages.filter(
+    message => message.type !== 'info'
+  );
 
   renderAlertBox(
     elements.cardCommercialAlert,
     cardMessages
   );
 
-  elements.btnExportPNG.disabled = commercialValidation.blockExport;
-  elements.btnExportPDF.disabled = commercialValidation.blockExport;
+  elements.btnExportPNG.disabled =
+    commercialValidation.blockExport;
+
+  elements.btnExportPDF.disabled =
+    commercialValidation.blockExport;
 
   elements.btnExportPNG.classList.toggle(
     'button-disabled',
@@ -595,7 +699,8 @@ function renderCard(theme, promotion, hasPortability) {
     ? `Titanio · ${TITANIO_TERM} meses fijos`
     : `Plazo a ${currentQuote.term} meses`;
 
-  elements.cardPlanPrice.textContent = formatMXN(theme.price);
+  elements.cardPlanPrice.textContent =
+    formatMXN(theme.price);
 
   elements.cardClientName.textContent =
     elements.clientNameInput.value.trim() || '-';
@@ -637,7 +742,9 @@ function renderCard(theme, promotion, hasPortability) {
     promotion.type === 'INVALID'
   ) {
     elements.cardPromoPrice.textContent = 'N/A';
-    elements.cardPromoPrice.classList.add('not-available-price');
+    elements.cardPromoPrice.classList.add(
+      'not-available-price'
+    );
   } else {
     elements.cardPromoPrice.textContent =
       formatMXN(currentQuote.finalPrice);
@@ -696,15 +803,18 @@ function renderCard(theme, promotion, hasPortability) {
     formatMXN(currentQuote.totalMonthlyPromo);
 
   elements.cardSavingsLabel.textContent =
-    `Ahorro en equipo: ${formatMXN(currentQuote.savings)} (${currentQuote.discountPercent.toFixed(1)}%)`;
+    `Ahorro en equipo: ${formatMXN(currentQuote.savings)} ` +
+    `(${currentQuote.discountPercent.toFixed(1)}%)`;
 
   elements.cardAdvisor.textContent =
-    elements.advisorInput.value.trim() || 'Ejecutivo ARSA';
+    elements.advisorInput.value.trim() ||
+    'Ejecutivo ARSA';
 
   elements.cardDate.textContent =
     formatLongDate(elements.quoteDateInput.value);
 
-  elements.cardFolio.textContent = elements.folioInput.value;
+  elements.cardFolio.textContent =
+    elements.folioInput.value;
 }
 
 function renderPromotionStatus(promotion) {
@@ -718,21 +828,33 @@ function renderPromotionStatus(promotion) {
   };
 
   const textMap = {
-    INCLUDED: 'Equipo incluido con el plan seleccionado.',
-    PRICE: 'Precio promocional consultado desde Excel.',
+    INCLUDED:
+      'Equipo incluido con el plan seleccionado.',
+
+    PRICE:
+      'Precio promocional consultado desde Excel.',
+
     NOT_ELIGIBLE_PLAN:
-      promotion.reason || 'Este equipo aplica desde plan Plata.',
+      promotion.reason ||
+      'Este equipo aplica desde plan Plata.',
+
     NOT_AVAILABLE:
-      promotion.reason || 'No disponible para este plan y plazo.',
-    MISSING: 'Promoción no encontrada. Revisa el Excel.',
-    INVALID: 'Dato comercial inválido. Revisa el Excel.'
+      promotion.reason ||
+      'No disponible para este plan y plazo.',
+
+    MISSING:
+      'Promoción no encontrada. Revisa el Excel.',
+
+    INVALID:
+      'Dato comercial inválido. Revisa el Excel.'
   };
 
   elements.promoStatus.className =
     `promo-status ${classMap[promotion.type] || 'promo-danger'}`;
 
   elements.promoStatus.textContent =
-    textMap[promotion.type] || 'Promoción no disponible.';
+    textMap[promotion.type] ||
+    'Promoción no disponible.';
 }
 
 function renderEarlyRenewalComparison() {
@@ -761,15 +883,23 @@ function renderEarlyRenewalComparison() {
     ? (early / natural) * 100
     : null;
 
-  elements.naturalCompletionValue.textContent = formatMXN(natural);
-  elements.earlyRenewalPaymentValue.textContent = formatMXN(early);
-  elements.earlyRenewalSavingsValue.textContent = formatMXN(savings);
+  elements.naturalCompletionValue.textContent =
+    formatMXN(natural);
+
+  elements.earlyRenewalPaymentValue.textContent =
+    formatMXN(early);
+
+  elements.earlyRenewalSavingsValue.textContent =
+    formatMXN(savings);
 
   elements.earlyRenewalPercentValue.textContent =
-    percent === null ? '—' : `${percent.toFixed(2)}%`;
+    percent === null
+      ? '—'
+      : `${percent.toFixed(2)}%`;
 
   if (natural > 0 && early > natural) {
     elements.earlyRenewalWarning.hidden = false;
+
     elements.earlyRenewalWarning.textContent =
       'El pago para renovar antes es mayor al pago por concluir el plazo natural.';
   } else {
@@ -787,15 +917,20 @@ function toggleBreakdown() {
     willShow ? '−' : '＋';
 
   elements.toggleBreakdownText.textContent =
-    willShow ? 'Quitar desglose' : 'Agregar desglose';
+    willShow
+      ? 'Quitar desglose'
+      : 'Agregar desglose';
 }
 
 function resetQuote() {
-  const confirmReset = confirm(
-    '¿Deseas iniciar una nueva cotización? El catálogo de Excel se conservará.'
+  const confirmation = confirm(
+    '¿Deseas iniciar una nueva cotización? ' +
+    'El catálogo de Excel se conservará.'
   );
 
-  if (!confirmReset) return;
+  if (!confirmation) {
+    return;
+  }
 
   clearState();
 
@@ -822,15 +957,17 @@ function resetQuote() {
   elements.controlToggle.checked = false;
 
   elements.advisorInput.value = 'Akatzin Ortega';
+
   setDefaultDate();
 
   elements.folioInput.value = generateFolio();
 
   elements.quoteBreakdown.hidden = true;
   elements.toggleBreakdownIcon.textContent = '＋';
-  elements.toggleBreakdownText.textContent = 'Agregar desglose';
+  elements.toggleBreakdownText.textContent =
+    'Agregar desglose';
 
-  updateDevices();
+  updateDevices('');
   syncSelectedDevice();
   renderQuote();
 }
@@ -841,14 +978,20 @@ function saveState() {
     clientPhoneInput: elements.clientPhoneInput.value,
     operationSelect: elements.operationSelect.value,
 
-    earlyRenewalToggle: elements.earlyRenewalToggle.checked,
-    naturalCompletionInput: elements.naturalCompletionInput.value,
+    earlyRenewalToggle:
+      elements.earlyRenewalToggle.checked,
+
+    naturalCompletionInput:
+      elements.naturalCompletionInput.value,
+
     earlyRenewalPaymentInput:
       elements.earlyRenewalPaymentInput.value,
 
     brandSelect: elements.brandSelect.value,
     deviceSearch: elements.deviceSearch.value,
-    includedOnlyToggle: elements.includedOnlyToggle.checked,
+    includedOnlyToggle:
+      elements.includedOnlyToggle.checked,
+
     deviceId: elements.deviceSelect.value,
 
     planSelect: elements.planSelect.value,
@@ -874,19 +1017,23 @@ async function exportPNG() {
   }
 
   try {
-    const canvas = await window.html2canvas(elements.quoteCard, {
-      scale: 2,
-      backgroundColor: '#090d16',
-      useCORS: true,
-      logging: false,
-      onclone: clonedDocument => {
-        clonedDocument
-          .querySelectorAll('[data-export-hide]')
-          .forEach(element => {
-            element.style.display = 'none';
-          });
+    const canvas = await window.html2canvas(
+      elements.quoteCard,
+      {
+        scale: 2,
+        backgroundColor: '#090d16',
+        useCORS: true,
+        logging: false,
+
+        onclone: clonedDocument => {
+          clonedDocument
+            .querySelectorAll('[data-export-hide]')
+            .forEach(element => {
+              element.style.display = 'none';
+            });
+        }
       }
-    });
+    );
 
     const link = document.createElement('a');
 
@@ -910,21 +1057,26 @@ async function exportPDF() {
   }
 
   try {
-    const canvas = await window.html2canvas(elements.quoteCard, {
-      scale: 2,
-      backgroundColor: '#090d16',
-      useCORS: true,
-      logging: false,
-      onclone: clonedDocument => {
-        clonedDocument
-          .querySelectorAll('[data-export-hide]')
-          .forEach(element => {
-            element.style.display = 'none';
-          });
+    const canvas = await window.html2canvas(
+      elements.quoteCard,
+      {
+        scale: 2,
+        backgroundColor: '#090d16',
+        useCORS: true,
+        logging: false,
+
+        onclone: clonedDocument => {
+          clonedDocument
+            .querySelectorAll('[data-export-hide]')
+            .forEach(element => {
+              element.style.display = 'none';
+            });
+        }
       }
-    });
+    );
 
     const imageData = canvas.toDataURL('image/png');
+
     const { jsPDF } = window.jspdf;
 
     const pdf = new jsPDF({
@@ -969,6 +1121,118 @@ async function exportPDF() {
   }
 }
 
+/* =========================================================
+   FUNCIONES DE VIGENCIA PARA SELECTOR DE MODELOS
+   ========================================================= */
+
+function formatValidityForSelector(validity = '') {
+  const text = String(validity || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  return text;
+}
+
+/**
+ * Convierte vigencias como:
+ *
+ * "08 MAYO 26 - 26 SEPTIEMBRE 26"
+ * "21 JULIO 26 - INDEFINIDO"
+ * "01 SEPTIEMBRE 26 - 30 SEPTIEMBRE 26"
+ *
+ * en valores que se pueden ordenar.
+ */
+function getValiditySortValue(validity = '') {
+  const text = String(validity || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+
+  /*
+   * Las promociones INDEFINIDAS aparecen primero.
+   */
+  if (text.includes('INDEFINIDO')) {
+    return {
+      start: extractFirstDateFromValidity(text),
+      end: Number.MAX_SAFE_INTEGER
+    };
+  }
+
+  const dateMatches = text.match(
+    /\b\d{1,2}\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{2,4}\b/g
+  ) || [];
+
+  const dates = dateMatches
+    .map(parseSpanishDate)
+    .filter(Boolean);
+
+  return {
+    start: dates[0]?.getTime() || 0,
+    end: dates[dates.length - 1]?.getTime() || 0
+  };
+}
+
+function extractFirstDateFromValidity(validityText = '') {
+  const match = String(validityText).match(
+    /\b\d{1,2}\s+(ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE)\s+\d{2,4}\b/
+  );
+
+  const date = match
+    ? parseSpanishDate(match[0])
+    : null;
+
+  return date ? date.getTime() : 0;
+}
+
+function parseSpanishDate(dateText = '') {
+  const months = {
+    ENERO: 0,
+    FEBRERO: 1,
+    MARZO: 2,
+    ABRIL: 3,
+    MAYO: 4,
+    JUNIO: 5,
+    JULIO: 6,
+    AGOSTO: 7,
+    SEPTIEMBRE: 8,
+    OCTUBRE: 9,
+    NOVIEMBRE: 10,
+    DICIEMBRE: 11
+  };
+
+  const parts = String(dateText)
+    .trim()
+    .toUpperCase()
+    .split(/\s+/);
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const day = Number(parts[0]);
+  const month = months[parts[1]];
+  let year = Number(parts[2]);
+
+  if (
+    !Number.isFinite(day) ||
+    month === undefined ||
+    !Number.isFinite(year)
+  ) {
+    return null;
+  }
+
+  if (year < 100) {
+    year += 2000;
+  }
+
+  return new Date(year, month, day, 12, 0, 0);
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+
 function setDefaultDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60000;
@@ -994,7 +1258,9 @@ function generateFolio() {
 }
 
 function formatLongDate(value) {
-  if (!value) return '';
+  if (!value) {
+    return '';
+  }
 
   const date = new Date(`${value}T12:00:00`);
 
