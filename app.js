@@ -1,6 +1,15 @@
 /**
  * ARSA Cotizador Next - app.js
- * Aplicación principal con contraste adaptable por plan.
+ * Controlador principal con:
+ * - Catálogo Excel
+ * - Búsqueda y filtros
+ * - Equipos incluidos
+ * - Vigencia en selector
+ * - Cliente, operación, asesor, fecha y folio
+ * - Comparativa de renovación anticipada
+ * - Desglose opcional
+ * - Recomendaciones por presupuesto
+ * - PNG/PDF con colores sólidos para exportación
  */
 
 import { CatalogEngine } from './catalogEngine.js';
@@ -217,7 +226,10 @@ function setupListeners() {
     renderQuote();
   });
 
-  elements.resetQuoteBtn.addEventListener('click', resetQuote);
+  elements.resetQuoteBtn.addEventListener(
+    'click',
+    resetQuote
+  );
 
   elements.findSimilarBtn.addEventListener('click', () => {
     showRecommendations('similar');
@@ -240,8 +252,15 @@ function setupListeners() {
     handleRecommendationClick
   );
 
-  elements.btnExportPNG.addEventListener('click', exportPNG);
-  elements.btnExportPDF.addEventListener('click', exportPDF);
+  elements.btnExportPNG.addEventListener(
+    'click',
+    exportPNG
+  );
+
+  elements.btnExportPDF.addEventListener(
+    'click',
+    exportPDF
+  );
 }
 
 function hydrateStoredData() {
@@ -383,7 +402,8 @@ async function importExcel(event) {
 }
 
 function populateBrands() {
-  const currentBrand = elements.brandSelect.value || 'TODAS';
+  const currentBrand =
+    elements.brandSelect.value || 'TODAS';
 
   const options = [
     '<option value="TODAS">Todas las marcas</option>',
@@ -464,26 +484,32 @@ function updateDevices(preferredId = '') {
     return;
   }
 
-  const previousId = preferredId || elements.deviceSelect.value;
+  const previousId =
+    preferredId || elements.deviceSelect.value;
 
   const previousStillExists = devices.some(device =>
     String(device.id) === String(previousId)
   );
 
-  elements.deviceSelect.innerHTML = devices.map(device => {
-    const modelName = `${device.brand} - ${device.name}`;
-    const validity = formatValidityForSelector(device.validity);
+  elements.deviceSelect.innerHTML = devices
+    .map(device => {
+      const modelName = `${device.brand} - ${device.name}`;
 
-    const text = validity
-      ? `${modelName} | Vigencia: ${validity}`
-      : `${modelName} | Vigencia no indicada`;
+      const validity = formatValidityForSelector(
+        device.validity
+      );
 
-    return `
-      <option value="${escapeHtml(String(device.id))}">
-        ${escapeHtml(text)}
-      </option>
-    `;
-  }).join('');
+      const text = validity
+        ? `${modelName} | Vigencia: ${validity}`
+        : `${modelName} | Vigencia no indicada`;
+
+      return `
+        <option value="${escapeHtml(String(device.id))}">
+          ${escapeHtml(text)}
+        </option>
+      `;
+    })
+    .join('');
 
   const selectedId = previousStillExists
     ? String(previousId)
@@ -559,11 +585,6 @@ function renderQuote() {
   saveState();
 }
 
-/**
- * Aplicación de tema:
- * Plata y Platino activan atributos de alto contraste
- * tanto para encabezado como total mensual.
- */
 function applyTheme(theme) {
   const root = document.documentElement;
 
@@ -741,15 +762,18 @@ function renderAlertBox(container, messages) {
 
   container.hidden = false;
 
-  container.innerHTML = messages.map(message => `
-    <div class="alert-item alert-${message.type}">
-      ${escapeHtml(message.text)}
-    </div>
-  `).join('');
+  container.innerHTML = messages
+    .map(message => `
+      <div class="alert-item alert-${message.type}">
+        ${escapeHtml(message.text)}
+      </div>
+    `)
+    .join('');
 }
 
 function renderCard(theme, promotion, hasPortability) {
-  elements.cardPlanTitle.textContent = `Plan ${theme.name}`;
+  elements.cardPlanTitle.textContent =
+    `Plan ${theme.name}`;
 
   elements.cardPlanTerm.textContent = currentQuote.isTitanio
     ? `Titanio · ${TITANIO_TERM} meses fijos`
@@ -977,7 +1001,9 @@ function showRecommendations(mode) {
     return;
   }
 
-  const theme = resolvePlanTheme(elements.planSelect.value);
+  const theme = resolvePlanTheme(
+    elements.planSelect.value
+  );
 
   const hasPortability =
     elements.operationSelect.value === 'portabilidad' ||
@@ -989,14 +1015,18 @@ function showRecommendations(mode) {
     planName: theme.name,
     termMonths: currentQuote.term,
     baseRent: theme.price,
-    downPayment: Number(elements.downPaymentInput.value) || 0,
+    downPayment:
+      Number(elements.downPaymentInput.value) || 0,
     hasPortability,
     hasInsurance: elements.insuranceToggle.checked,
     hasControl: elements.controlToggle.checked,
     currentMonthly: currentQuote.totalMonthlyPromo,
-    currentPayment: Number(elements.currentMonthlyInput.value) || 0,
-    desiredPayment: Number(elements.desiredMonthlyInput.value) || 0,
-    tolerance: Number(elements.toleranceInput.value) || 100,
+    currentPayment:
+      Number(elements.currentMonthlyInput.value) || 0,
+    desiredPayment:
+      Number(elements.desiredMonthlyInput.value) || 0,
+    tolerance:
+      Number(elements.toleranceInput.value) || 100,
     mode,
     limit: 4
   });
@@ -1222,6 +1252,285 @@ function resetQuote() {
   renderQuote();
 }
 
+/**
+ * Crea una copia temporal optimizada para PNG/PDF.
+ *
+ * Los degradados de interfaz se conservan en pantalla, pero al
+ * exportar se convierten en fondos sólidos con alto contraste.
+ */
+async function renderExportCanvas() {
+  const source = document.getElementById('quoteCard');
+
+  if (!source) {
+    throw new Error(
+      'No se encontró la tarjeta de cotización.'
+    );
+  }
+
+  const sourceRect = source.getBoundingClientRect();
+
+  const width = Math.ceil(sourceRect.width);
+
+  const height = Math.ceil(
+    Math.max(
+      source.scrollHeight,
+      sourceRect.height
+    )
+  );
+
+  const wrapper = document.createElement('div');
+
+  wrapper.style.position = 'fixed';
+  wrapper.style.top = '0';
+  wrapper.style.left = '-100000px';
+  wrapper.style.width = `${width}px`;
+  wrapper.style.minHeight = `${height}px`;
+  wrapper.style.overflow = 'visible';
+  wrapper.style.zIndex = '-1';
+  wrapper.style.background = '#07101c';
+  wrapper.style.colorScheme = 'dark';
+
+  const clone = source.cloneNode(true);
+
+  clone.style.width = `${width}px`;
+  clone.style.maxWidth = 'none';
+  clone.style.minHeight = `${height}px`;
+  clone.style.overflow = 'visible';
+  clone.style.transform = 'none';
+  clone.style.background = '#07101c';
+  clone.style.colorScheme = 'dark';
+
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  wrapper
+    .querySelectorAll('[data-export-hide]')
+    .forEach(element => {
+      element.style.display = 'none';
+    });
+
+  const rootStyles = getComputedStyle(
+    document.documentElement
+  );
+
+  const p1 =
+    rootStyles.getPropertyValue('--p1').trim() ||
+    '#24c8f5';
+
+  const p2 =
+    rootStyles.getPropertyValue('--p2').trim() ||
+    '#0a75d5';
+
+  const planText = rootStyles
+    .getPropertyValue('--plan-text')
+    .trim();
+
+  const isLightPlan =
+    planText === '#13233a' ||
+    planText === '#142238' ||
+    planText === '#172033';
+
+  const exportPrimaryText = isLightPlan
+    ? '#13233a'
+    : '#ffffff';
+
+  const exportSecondaryText = isLightPlan
+    ? '#2b405d'
+    : '#ffffff';
+
+  const exportGradient = isLightPlan
+    ? 'linear-gradient(135deg, #f8fbff 0%, #c9d9e9 48%, #7b91aa 100%)'
+    : `linear-gradient(135deg, ${p1} 0%, ${p2} 100%)`;
+
+  const planHeader = clone.querySelector(
+    '.plan-header-band'
+  );
+
+  if (planHeader) {
+    planHeader.style.background = exportGradient;
+    planHeader.style.backgroundColor = p1;
+    planHeader.style.backgroundImage = exportGradient;
+    planHeader.style.opacity = '1';
+    planHeader.style.filter = 'none';
+    planHeader.style.backdropFilter = 'none';
+    planHeader.style.webkitBackdropFilter = 'none';
+    planHeader.style.boxShadow = 'none';
+
+    planHeader
+      .querySelectorAll(
+        '.plan-header-title, .plan-header-sub, .plan-header-price'
+      )
+      .forEach(element => {
+        element.style.opacity = '1';
+        element.style.filter = 'none';
+        element.style.color = exportPrimaryText;
+        element.style.textShadow = isLightPlan
+          ? '0 1px 1px rgba(255,255,255,0.75)'
+          : '0 2px 8px rgba(0,0,0,0.30)';
+      });
+
+    const subtitle = planHeader.querySelector(
+      '.plan-header-sub'
+    );
+
+    if (subtitle) {
+      subtitle.style.color = exportSecondaryText;
+    }
+  }
+
+  const totalBand = clone.querySelector(
+    '.total-hero-band'
+  );
+
+  if (totalBand) {
+    totalBand.style.background = exportGradient;
+    totalBand.style.backgroundColor = p1;
+    totalBand.style.backgroundImage = exportGradient;
+    totalBand.style.opacity = '1';
+    totalBand.style.filter = 'none';
+    totalBand.style.backdropFilter = 'none';
+    totalBand.style.webkitBackdropFilter = 'none';
+    totalBand.style.boxShadow = 'none';
+
+    totalBand
+      .querySelectorAll(
+        '.total-label, .total-savings, .total-hero-val'
+      )
+      .forEach(element => {
+        element.style.opacity = '1';
+        element.style.filter = 'none';
+        element.style.color = exportPrimaryText;
+        element.style.textShadow = isLightPlan
+          ? '0 1px 1px rgba(255,255,255,0.75)'
+          : '0 2px 8px rgba(0,0,0,0.30)';
+      });
+
+    const savings = totalBand.querySelector(
+      '.total-savings'
+    );
+
+    if (savings) {
+      savings.style.color = exportSecondaryText;
+    }
+  }
+
+  clone.querySelectorAll('*').forEach(element => {
+    element.style.animation = 'none';
+    element.style.transition = 'none';
+  });
+
+  await new Promise(resolve => {
+    requestAnimationFrame(resolve);
+  });
+
+  try {
+    return await window.html2canvas(wrapper, {
+      scale: 2,
+      backgroundColor: '#07101c',
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height,
+      scrollX: 0,
+      scrollY: 0,
+      removeContainer: true
+    });
+  } finally {
+    wrapper.remove();
+  }
+}
+
+async function exportPNG() {
+  if (commercialValidation.blockExport) {
+    alert(
+      'No puedes exportar hasta seleccionar una combinación comercial válida.'
+    );
+    return;
+  }
+
+  try {
+    const canvas = await renderExportCanvas();
+
+    const link = document.createElement('a');
+
+    link.download =
+      `Cotizacion-ARSA-${safeFileName(elements.folioInput.value)}.png`;
+
+    link.href = canvas.toDataURL('image/png', 1);
+    link.click();
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      `No se pudo generar el PNG: ${error.message}`
+    );
+  }
+}
+
+async function exportPDF() {
+  if (commercialValidation.blockExport) {
+    alert(
+      'No puedes exportar hasta seleccionar una combinación comercial válida.'
+    );
+    return;
+  }
+
+  try {
+    const canvas = await renderExportCanvas();
+
+    const imageData = canvas.toDataURL('image/png', 1);
+
+    const { jsPDF } = window.jspdf;
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const margin = 7;
+
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - margin * 2;
+
+    const scale = Math.min(
+      maxWidth / canvas.width,
+      maxHeight / canvas.height
+    );
+
+    const imageWidth = canvas.width * scale;
+    const imageHeight = canvas.height * scale;
+
+    pdf.addImage(
+      imageData,
+      'PNG',
+      (pageWidth - imageWidth) / 2,
+      margin,
+      imageWidth,
+      Math.min(imageHeight, maxHeight),
+      undefined,
+      'NONE'
+    );
+
+    pdf.save(
+      `Cotizacion-ARSA-${safeFileName(elements.folioInput.value)}.pdf`
+    );
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      `No se pudo generar el PDF: ${error.message}`
+    );
+  }
+}
+
 function saveState() {
   saveFormState({
     clientNameInput: elements.clientNameInput.value,
@@ -1260,116 +1569,6 @@ function saveState() {
     quoteDateInput: elements.quoteDateInput.value,
     folioInput: elements.folioInput.value
   });
-}
-
-async function exportPNG() {
-  if (commercialValidation.blockExport) {
-    alert(
-      'No puedes exportar hasta seleccionar una combinación comercial válida.'
-    );
-    return;
-  }
-
-  try {
-    const canvas = await window.html2canvas(
-      elements.quoteCard,
-      {
-        scale: 2,
-        backgroundColor: '#090d16',
-        useCORS: true,
-        logging: false,
-        onclone: clonedDocument => {
-          clonedDocument
-            .querySelectorAll('[data-export-hide]')
-            .forEach(element => {
-              element.style.display = 'none';
-            });
-        }
-      }
-    );
-
-    const link = document.createElement('a');
-
-    link.download =
-      `Cotizacion-${safeFileName(elements.folioInput.value)}.png`;
-
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  } catch (error) {
-    console.error(error);
-    alert('No se pudo generar el PNG.');
-  }
-}
-
-async function exportPDF() {
-  if (commercialValidation.blockExport) {
-    alert(
-      'No puedes exportar hasta seleccionar una combinación comercial válida.'
-    );
-    return;
-  }
-
-  try {
-    const canvas = await window.html2canvas(
-      elements.quoteCard,
-      {
-        scale: 2,
-        backgroundColor: '#090d16',
-        useCORS: true,
-        logging: false,
-        onclone: clonedDocument => {
-          clonedDocument
-            .querySelectorAll('[data-export-hide]')
-            .forEach(element => {
-              element.style.display = 'none';
-            });
-        }
-      }
-    );
-
-    const imageData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const margin = 8;
-    const maxWidth = pageWidth - margin * 2;
-    const maxHeight = pageHeight - margin * 2;
-
-    const scale = Math.min(
-      maxWidth / canvas.width,
-      maxHeight / canvas.height
-    );
-
-    const width = canvas.width * scale;
-    const height = canvas.height * scale;
-
-    pdf.addImage(
-      imageData,
-      'PNG',
-      (pageWidth - width) / 2,
-      margin,
-      width,
-      height,
-      undefined,
-      'FAST'
-    );
-
-    pdf.save(
-      `Cotizacion-${safeFileName(elements.folioInput.value)}.pdf`
-    );
-  } catch (error) {
-    console.error(error);
-    alert('No se pudo generar el PDF.');
-  }
 }
 
 function formatValidityForSelector(validity = '') {
