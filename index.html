@@ -9,17 +9,50 @@
 
   <title>ARSA Cotizador Next</title>
 
+  <!-- El CSS está en la raíz del repositorio -->
+  <link
+    id="arsaCrystalStyles"
+    rel="stylesheet"
+    href="https://basy12.github.io/arsa-cotizador-next/crystal.css?v=20260902-1904"
+  >
+
+  <!-- Dependencias externas -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-  <link rel="stylesheet" href="./crystal.css">
+  <style>
+    /*
+      Este estilo mínimo solo sirve como respaldo.
+      Si crystal.css carga correctamente, no afecta el diseño final.
+    */
+    #cssLoadError {
+      display: none;
+      position: fixed;
+      z-index: 99999;
+      right: 12px;
+      bottom: 12px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border: 1px solid #ff7281;
+      border-radius: 12px;
+      color: #fff;
+      background: #7f1d1d;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="cssLoadError">
+    No se pudo cargar crystal.css. Revisa que el archivo exista
+    en la raíz del repositorio y se llame exactamente crystal.css.
+  </div>
+
   <main class="crystal-app">
 
-    <!-- PANEL IZQUIERDO -->
     <section class="glass-panel">
       <div class="panel-title">
         <span>ARSA Cotizador Next</span>
@@ -278,7 +311,6 @@
         </label>
       </div>
 
-      <!-- BUSCADOR POR PRESUPUESTO -->
       <div class="section-title">💡 Buscador por presupuesto</div>
 
       <div class="field-group">
@@ -412,7 +444,6 @@
       </button>
     </section>
 
-    <!-- PANEL DERECHO -->
     <section>
       <article id="quoteCard" class="quote-card">
 
@@ -560,7 +591,6 @@
             </div>
           </section>
 
-          <!-- SUGERENCIAS: INTERNO, NO SE EXPORTA -->
           <section
             id="recommendationsPanel"
             class="recommendations-panel"
@@ -573,7 +603,10 @@
                   💡 Modelos sugeridos
                 </div>
 
-                <div id="recommendationsSubtitle" class="recommendations-subtitle">
+                <div
+                  id="recommendationsSubtitle"
+                  class="recommendations-subtitle"
+                >
                   Alternativas comerciales
                 </div>
               </div>
@@ -588,7 +621,10 @@
               </button>
             </div>
 
-            <div id="recommendationsList" class="recommendations-list"></div>
+            <div
+              id="recommendationsList"
+              class="recommendations-list"
+            ></div>
           </section>
 
           <section
@@ -663,7 +699,9 @@
               </div>
             </div>
 
-            <div id="cardTotalMonthly" class="total-hero-val">$0.00</div>
+            <div id="cardTotalMonthly" class="total-hero-val">
+              $0.00
+            </div>
           </section>
 
           <footer class="quote-footer">
@@ -715,6 +753,33 @@
     } else {
       init();
     }
+  </script>
+
+  <script>
+    /*
+      Diagnóstico visual:
+      Si por alguna razón crystal.css no carga, aparecerá una alerta.
+    */
+    const cssLink = document.getElementById('arsaCrystalStyles');
+    const cssError = document.getElementById('cssLoadError');
+
+    cssLink.addEventListener('error', () => {
+      cssError.style.display = 'block';
+    });
+
+    setTimeout(() => {
+      const style = getComputedStyle(document.body);
+
+      if (
+        style.backgroundColor === 'rgb(255, 255, 255)' &&
+        !document.querySelector('.glass-panel')?.style?.background
+      ) {
+        /*
+          No fuerza error visual porque un fondo puede ser un gradiente,
+          pero conserva el diagnóstico de carga del link.
+        */
+      }
+    }, 2000);
   </script>
 </body>
 </html>
