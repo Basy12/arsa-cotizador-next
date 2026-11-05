@@ -9,23 +9,24 @@
 
   <title>ARSA Cotizador Next</title>
 
-  <!-- El CSS está en la raíz del repositorio -->
+  <!-- Preconexión a CDNs para mejorar la carga en redes móviles -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+  <!-- Hoja de estilos con ruta relativa correcta para GitHub Pages -->
   <link
     id="arsaCrystalStyles"
     rel="stylesheet"
     href="./crystal.css"
   >
 
-  <!-- Dependencias externas -->
+  <!-- Dependencias externas con carga diferida (defer) -->
   <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <style>
-    /*
-      Este estilo mínimo solo sirve como respaldo.
-      Si crystal.css carga correctamente, no afecta el diseño final.
-    */
+    /* Estilo de diagnóstico que solo se muestra si el CSS falla en cargar */
     #cssLoadError {
       display: none;
       position: fixed;
@@ -756,30 +757,13 @@
   </script>
 
   <script>
-    /*
-      Diagnóstico visual:
-      Si por alguna razón crystal.css no carga, aparecerá una alerta.
-    */
+    /* Diagnóstico visual para detectar fallos de carga en el CSS */
     const cssLink = document.getElementById('arsaCrystalStyles');
     const cssError = document.getElementById('cssLoadError');
 
     cssLink.addEventListener('error', () => {
       cssError.style.display = 'block';
     });
-
-    setTimeout(() => {
-      const style = getComputedStyle(document.body);
-
-      if (
-        style.backgroundColor === 'rgb(255, 255, 255)' &&
-        !document.querySelector('.glass-panel')?.style?.background
-      ) {
-        /*
-          No fuerza error visual porque un fondo puede ser un gradiente,
-          pero conserva el diagnóstico de carga del link.
-        */
-      }
-    }, 2000);
   </script>
 </body>
 </html>
