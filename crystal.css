@@ -101,6 +101,8 @@ select {
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.40);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* PANEL */
@@ -352,6 +354,8 @@ select {
   box-shadow:
     0 28px 82px rgba(0, 0, 0, 0.46),
     0 0 42px var(--plan-glow);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .quote-card::before {
